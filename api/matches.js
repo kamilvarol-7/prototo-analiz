@@ -1,6 +1,6 @@
 const { getFirestoreDb } = require('./firebase-admin-init');
 
-// Self-contained server-side fallback matches with correct FotMob team logo URLs
+// Self-contained server-side fallback matches with correct FotMob team logo URLs and full prediction models
 const INITIAL_MATCHES = [
   {
     matchId: "1",
@@ -23,7 +23,13 @@ const INITIAL_MATCHES = [
       { homeScore: 3, awayScore: 0, date: "04.06.2023" }
     ],
     playPercentages: { home: 55, draw: 25, away: 20 },
-    odds: { home: 1.95, draw: 3.40, away: 3.10 }
+    odds: { home: 1.95, draw: 3.40, away: 3.10 },
+    probabilities: { homeWin: 52, draw: 26, awayWin: 22 },
+    scorePredictions: [
+      { score: "2 - 1", probability: 14.8 },
+      { score: "1 - 1", probability: 12.2 },
+      { score: "2 - 0", probability: 10.5 }
+    ]
   },
   {
     matchId: "2",
@@ -46,7 +52,13 @@ const INITIAL_MATCHES = [
       { homeScore: 2, awayScore: 1, date: "12.03.2023" }
     ],
     playPercentages: { home: 35, draw: 30, away: 35 },
-    odds: { home: 2.45, draw: 3.15, away: 2.55 }
+    odds: { home: 2.45, draw: 3.15, away: 2.55 },
+    probabilities: { homeWin: 33, draw: 29, awayWin: 38 },
+    scorePredictions: [
+      { score: "1 - 1", probability: 15.2 },
+      { score: "1 - 2", probability: 11.8 },
+      { score: "0 - 1", probability: 9.6 }
+    ]
   },
   {
     matchId: "3",
@@ -69,7 +81,13 @@ const INITIAL_MATCHES = [
       { homeScore: 0, awayScore: 0, date: "16.04.2023" }
     ],
     playPercentages: { home: 48, draw: 28, away: 24 },
-    odds: { home: 2.10, draw: 3.30, away: 2.90 }
+    odds: { home: 2.10, draw: 3.30, away: 2.90 },
+    probabilities: { homeWin: 45, draw: 28, awayWin: 27 },
+    scorePredictions: [
+      { score: "1 - 1", probability: 13.5 },
+      { score: "2 - 1", probability: 11.2 },
+      { score: "1 - 0", probability: 10.1 }
+    ]
   },
   {
     matchId: "4",
@@ -90,7 +108,13 @@ const INITIAL_MATCHES = [
       { homeScore: 3, awayScore: 1, date: "15.01.2024" }
     ],
     playPercentages: { home: 50, draw: 30, away: 20 },
-    odds: { home: 2.05, draw: 3.20, away: 3.10 }
+    odds: { home: 2.05, draw: 3.20, away: 3.10 },
+    probabilities: { homeWin: 42, draw: 30, awayWin: 28 },
+    scorePredictions: [
+      { score: "1 - 1", probability: 14.1 },
+      { score: "1 - 0", probability: 12.3 },
+      { score: "2 - 1", probability: 10.2 }
+    ]
   },
   {
     matchId: "5",
@@ -113,7 +137,13 @@ const INITIAL_MATCHES = [
       { homeScore: 1, awayScore: 1, date: "07.04.2023" }
     ],
     playPercentages: { home: 40, draw: 35, away: 25 },
-    odds: { home: 2.25, draw: 3.00, away: 2.95 }
+    odds: { home: 2.25, draw: 3.00, away: 2.95 },
+    probabilities: { homeWin: 38, draw: 33, awayWin: 29 },
+    scorePredictions: [
+      { score: "1 - 1", probability: 16.5 },
+      { score: "1 - 0", probability: 13.2 },
+      { score: "0 - 1", probability: 10.8 }
+    ]
   },
   {
     matchId: "6",
@@ -135,7 +165,13 @@ const INITIAL_MATCHES = [
       { homeScore: 2, awayScore: 0, date: "29.11.2021" }
     ],
     playPercentages: { home: 45, draw: 30, away: 25 },
-    odds: { home: 2.15, draw: 3.10, away: 3.00 }
+    odds: { home: 2.15, draw: 3.10, away: 3.00 },
+    probabilities: { homeWin: 47, draw: 28, awayWin: 25 },
+    scorePredictions: [
+      { score: "2 - 1", probability: 13.9 },
+      { score: "1 - 1", probability: 12.1 },
+      { score: "2 - 0", probability: 10.4 }
+    ]
   },
   {
     matchId: "7",
@@ -154,7 +190,13 @@ const INITIAL_MATCHES = [
     },
     h2hMatches: [],
     playPercentages: { home: 55, draw: 25, away: 20 },
-    odds: { home: 1.85, draw: 3.40, away: 3.50 }
+    odds: { home: 1.85, draw: 3.40, away: 3.50 },
+    probabilities: { homeWin: 50, draw: 26, awayWin: 24 },
+    scorePredictions: [
+      { score: "2 - 1", probability: 12.9 },
+      { score: "1 - 1", probability: 11.5 },
+      { score: "2 - 0", probability: 10.2 }
+    ]
   },
   {
     matchId: "8",
@@ -177,7 +219,13 @@ const INITIAL_MATCHES = [
       { homeScore: 1, awayScore: 2, date: "28.01.2023" }
     ],
     playPercentages: { home: 38, draw: 32, away: 30 },
-    odds: { home: 2.30, draw: 3.10, away: 2.75 }
+    odds: { home: 2.30, draw: 3.10, away: 2.75 },
+    probabilities: { homeWin: 36, draw: 31, awayWin: 33 },
+    scorePredictions: [
+      { score: "1 - 1", probability: 15.6 },
+      { score: "1 - 2", probability: 11.2 },
+      { score: "2 - 1", probability: 10.5 }
+    ]
   },
   {
     matchId: "9",
@@ -200,7 +248,13 @@ const INITIAL_MATCHES = [
       { homeScore: 1, awayScore: 4, date: "26.04.2023" }
     ],
     playPercentages: { home: 33, draw: 30, away: 37 },
-    odds: { home: 2.80, draw: 3.30, away: 2.35 }
+    odds: { home: 2.80, draw: 3.30, away: 2.35 },
+    probabilities: { homeWin: 35, draw: 27, awayWin: 38 },
+    scorePredictions: [
+      { score: "1 - 1", probability: 12.8 },
+      { score: "1 - 2", probability: 10.5 },
+      { score: "2 - 2", probability: 8.9 }
+    ]
   },
   {
     matchId: "10",
@@ -223,7 +277,13 @@ const INITIAL_MATCHES = [
       { homeScore: 0, awayScore: 1, date: "24.09.2023" }
     ],
     playPercentages: { home: 45, draw: 28, away: 27 },
-    odds: { home: 1.95, draw: 3.60, away: 3.20 }
+    odds: { home: 1.95, draw: 3.60, away: 3.20 },
+    probabilities: { homeWin: 46, draw: 26, awayWin: 28 },
+    scorePredictions: [
+      { score: "2 - 1", probability: 12.1 },
+      { score: "1 - 1", probability: 11.5 },
+      { score: "2 - 2", probability: 9.8 }
+    ]
   },
   {
     matchId: "11",
@@ -246,7 +306,13 @@ const INITIAL_MATCHES = [
       { homeScore: 1, awayScore: 1, date: "25.02.2023" }
     ],
     playPercentages: { home: 58, draw: 24, away: 18 },
-    odds: { home: 1.80, draw: 3.60, away: 3.90 }
+    odds: { home: 1.80, draw: 3.60, away: 3.90 },
+    probabilities: { homeWin: 58, draw: 24, awayWin: 18 },
+    scorePredictions: [
+      { score: "2 - 0", probability: 15.1 },
+      { score: "2 - 1", probability: 12.8 },
+      { score: "1 - 0", probability: 11.2 }
+    ]
   },
   {
     matchId: "12",
@@ -269,7 +335,13 @@ const INITIAL_MATCHES = [
       { homeScore: 1, awayScore: 2, date: "20.05.2023" }
     ],
     playPercentages: { home: 65, draw: 22, away: 13 },
-    odds: { home: 1.55, draw: 3.90, away: 5.25 }
+    odds: { home: 1.55, draw: 3.90, away: 5.25 },
+    probabilities: { homeWin: 64, draw: 22, awayWin: 14 },
+    scorePredictions: [
+      { score: "2 - 0", probability: 16.2 },
+      { score: "2 - 1", probability: 13.1 },
+      { score: "1 - 0", probability: 12.5 }
+    ]
   },
   {
     matchId: "13",
@@ -292,7 +364,13 @@ const INITIAL_MATCHES = [
       { homeScore: 0, awayScore: 1, date: "19.03.2023" }
     ],
     playPercentages: { home: 50, draw: 30, away: 20 },
-    odds: { home: 1.90, draw: 3.20, away: 3.80 }
+    odds: { home: 1.90, draw: 3.20, away: 3.80 },
+    probabilities: { homeWin: 55, draw: 27, awayWin: 18 },
+    scorePredictions: [
+      { score: "2 - 0", probability: 14.8 },
+      { score: "1 - 0", probability: 13.1 },
+      { score: "2 - 1", probability: 10.9 }
+    ]
   },
   {
     matchId: "14",
@@ -315,7 +393,13 @@ const INITIAL_MATCHES = [
       { homeScore: 1, awayScore: 1, date: "18.04.2023" }
     ],
     playPercentages: { home: 44, draw: 29, away: 27 },
-    odds: { home: 2.10, draw: 3.30, away: 3.00 }
+    odds: { home: 2.10, draw: 3.30, away: 3.00 },
+    probabilities: { homeWin: 45, draw: 29, awayWin: 26 },
+    scorePredictions: [
+      { score: "1 - 1", probability: 14.1 },
+      { score: "2 - 1", probability: 11.5 },
+      { score: "1 - 0", probability: 9.8 }
+    ]
   },
   {
     matchId: "15",
@@ -337,7 +421,13 @@ const INITIAL_MATCHES = [
       { homeScore: 1, awayScore: 1, date: "23.09.2023" }
     ],
     playPercentages: { home: 42, draw: 30, away: 28 },
-    odds: { home: 2.10, draw: 3.25, away: 2.95 }
+    odds: { home: 2.10, draw: 3.25, away: 2.95 },
+    probabilities: { homeWin: 40, draw: 31, awayWin: 29 },
+    scorePredictions: [
+      { score: "1 - 1", probability: 15.2 },
+      { score: "1 - 0", probability: 12.8 },
+      { score: "2 - 1", probability: 10.1 }
+    ]
   }
 ];
 

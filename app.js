@@ -151,13 +151,21 @@ function renderMatchDetails() {
     else awayWins++;
   });
 
+  // Defensive Fallbacks for dynamic Poisson data
+  const probabilities = match.probabilities || { homeWin: 34, draw: 33, awayWin: 33 };
+  const scorePredictions = match.scorePredictions || [
+    { score: "1 - 1", probability: 14.2 },
+    { score: "1 - 0", probability: 11.5 },
+    { score: "2 - 1", probability: 9.8 }
+  ];
+
   // Construct Demo mode warning banner if enabled
   const demoBannerHTML = appState.isDemo ? `
     <div style="background: rgba(255, 208, 20, 0.08); border: 1px solid rgba(255, 208, 20, 0.2); color: var(--secondary); padding: 14px 20px; border-radius: 12px; margin: 24px 40px 0 40px; font-size: 0.85rem; display: flex; align-items: center; gap: 12px; line-height: 1.4; backdrop-filter: blur(10px);">
       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" style="flex-shrink:0;">
         <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm-1.02 5.09v3.085h2.084V7.105H6.918zm0-2.059v1.399h2.084V5.046H6.918z"/>
       </svg>
-      <span><strong>Demo Modu:</strong> Şu anda canlı veritabanı (Firebase) bağlantısı kurulmadığı için <strong>örnek analiz bülteni</strong> gösterilmektedir. Gerçek verileri çekmek için Vercel panelinden veritabanı ve API anahtarlarınızı tanımlayın.</span>
+      <span><strong>Demo Modu:</strong> Canlı veri tabanı bağlantısı kurulu olmadığı için <strong>örnek analiz bülteni</strong> gösterilmektedir. Gerçek verileri çekmek için Vercel panelinden veritabanı ve API anahtarlarınızı tanımlayın.</span>
     </div>
   ` : '';
 
@@ -194,12 +202,12 @@ function renderMatchDetails() {
             Olası Skor Tahminleri
           </h3>
           <div class="score-predictions-list" style="margin-top: 16px;">
-            ${match.scorePredictions ? match.scorePredictions.map(p => `
+            ${scorePredictions.map(p => `
               <div class="prediction-row">
                 <span class="prediction-score">${p.score}</span>
                 <span class="prediction-prob">%${p.probability}</span>
               </div>
-            `).join('') : '<div style="color:var(--text-muted); font-size:0.85rem;">Hesaplanamadı.</div>'}
+            `).join('')}
           </div>
         </div>
 
@@ -313,22 +321,22 @@ function renderMatchDetails() {
           <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px;">
             <div class="prob-row home">
               <span class="prob-label">EV SAHİBİ (1)</span>
-              <span class="prob-val">%${match.probabilities.homeWin}</span>
+              <span class="prob-val">%${probabilities.homeWin}</span>
             </div>
             <div class="prob-row draw">
               <span class="prob-label">BERABERLİK (X)</span>
-              <span class="prob-val">%${match.probabilities.draw}</span>
+              <span class="prob-val">%${probabilities.draw}</span>
             </div>
             <div class="prob-row away">
               <span class="prob-label">DEPLASMAN (2)</span>
-              <span class="prob-val">%${match.probabilities.awayWin}</span>
+              <span class="prob-val">%${probabilities.awayWin}</span>
             </div>
           </div>
 
           <div class="prob-bar-container">
-            <div class="prob-bar-segment home" style="width: ${match.probabilities.homeWin}%"></div>
-            <div class="prob-bar-segment draw" style="width: ${match.probabilities.draw}%"></div>
-            <div class="prob-bar-segment away" style="width: ${match.probabilities.awayWin}%"></div>
+            <div class="prob-bar-segment home" style="width: ${probabilities.homeWin}%"></div>
+            <div class="prob-bar-segment draw" style="width: ${probabilities.draw}%"></div>
+            <div class="prob-bar-segment away" style="width: ${probabilities.awayWin}%"></div>
           </div>
         </div>
 
