@@ -5,7 +5,8 @@ const searchCache = {};
 
 // --- Helper: Clean and Sanitize Team Names for API-Football Fuzzy Search ---
 function sanitizeTeamNameForSearch(name) {
-  let clean = name.toLowerCase()
+  if (!name) return "";
+  let clean = String(name).toLowerCase()
     .replace(/ğ/g, 'g')
     .replace(/ü/g, 'u')
     .replace(/ş/g, 's')
@@ -20,13 +21,15 @@ function sanitizeTeamNameForSearch(name) {
                .replace(/\bsk\b/g, '')
                .replace(/\bbs\b/g, '')
                .replace(/\bbb\b/g, '')
+               .replace(/\bbb\b/g, '')
                .trim();
   return clean;
 }
 
 // --- Helper: League Name to API-Football League ID Mapping ---
 function getLeagueId(leagueName) {
-  const name = leagueName.toLowerCase().trim();
+  if (!leagueName) return 203; // Default to Süper Lig
+  const name = String(leagueName).toLowerCase().trim();
   if (name.includes("premier league") || name.includes("ingiltere") || name.includes("premier")) return 39;
   if (name.includes("la liga") || name.includes("laliga") || name.includes("ispanya")) return 140;
   if (name.includes("serie a") || name.includes("italya")) return 135;
@@ -45,7 +48,10 @@ function getLeagueId(leagueName) {
 
 // --- Helper: Search Team ID & Logo in Football API ---
 async function searchTeam(teamName, headers, baseUrl) {
-  const cleanName = sanitizeTeamNameForSearch(teamName);
+  const nameStr = teamName ? String(teamName).trim() : "";
+  if (!nameStr) return null;
+
+  const cleanName = sanitizeTeamNameForSearch(nameStr);
   
   // Return cached result if already searched in this execution run
   if (searchCache[cleanName]) {
@@ -60,23 +66,24 @@ async function searchTeam(teamName, headers, baseUrl) {
       let teamObj = data.response[0];
       
       // Auto-filter for Turkish teams first if searching a local team
-      const isLocalSearch = teamName.toLowerCase().match(/(spor|fk|sk|bb|ankara|istanbul|izmir|adana|bursa|kocaeli|erzurum|samsun|rize|konya|antalya|sivas|gaziantep|kayseri|hatay|bodrum|goztepe|eyup|basaksehir|galatasaray|fenerbahce|besiktas|trabzonspor|corum|umranıye|bandırma|bolu|manisa|altay|giresun|sakarya|kocaeli|şanlıurfa|malatya)/);
+      const isLocalSearch = nameStr.toLowerCase().match(/(spor|fk|sk|bb|ankara|istanbul|izmir|adana|bursa|kocaeli|erzurum|samsun|rize|konya|antalya|sivas|gaziantep|kayseri|hatay|bodrum|goztepe|eyup|basaksehir|galatasaray|fenerbahce|besiktas|trabzonspor|corum|umranıye|bandırma|bolu|manisa|altay|giresun|sakarya|kocaeli|şanlıurfa|malatya)/);
       if (isLocalSearch) {
-        const turkishTeam = data.response.find(r => r.team.country === 'Turkey');
+        const turkishTeam = data.response.find(r => r.team && r.team.country === 'Turkey');
         if (turkishTeam) {
           teamObj = turkishTeam;
         }
       }
       
-      const result = {
-        id: teamObj.team.id,
-        name: teamObj.team.name,
-        logo: teamObj.team.logo,
-        code: teamObj.team.code || teamName.slice(0, 3).toUpperCase()
-      };
-      
-      searchCache[cleanName] = result;
-      return result;
+      if (teamObj && teamObj.team) {
+        const result = {
+          id: teamObj.team.id,
+          name: teamObj.team.name,
+          logo: teamObj.team.logo,
+          code: teamObj.team.code || nameStr.slice(0, 3).toUpperCase()
+        };
+        searchCache[cleanName] = result;
+        return result;
+      }
     }
   } catch (err) {
     console.error(`Error searching team ${teamName}:`, err);
@@ -86,7 +93,7 @@ async function searchTeam(teamName, headers, baseUrl) {
 
 // --- Helper: Get Team Goals Stats, Matches Played and Form from Football API ---
 async function getTeamStats(teamId, leagueId, headers, baseUrl) {
-  if (!baseUrl || !headers) return null;
+  if (!teamId || !baseUrl || !headers) return null;
   try {
     const now = new Date();
     const year = now.getFullYear();
@@ -97,23 +104,40 @@ async function getTeamStats(teamId, leagueId, headers, baseUrl) {
     const data = await response.json();
     if (data && data.response) {
       const stats = data.response;
+      
+      // Defensive structure checks for stats object properties
+      const goalsFor = stats.goals && stats.goals.for ? stats.goals.for : {};
+      const goalsForAvg = goalsFor.average || {};
+      
+      const goalsAgainst = stats.goals && stats.goals.against ? stats.goals.against : {};
+      const goalsAgainstAvg = goalsAgainst.average || {};
+
+      const fixtures = stats.fixtures || {};
+      const played = fixtures.played || {};
+      const wins = fixtures.wins || {};
+      const draws = fixtures.draws || {};
+      const losses = fixtures.loses || {};
+
+      const cleanSheet = stats.clean_sheet || {};
+      const failedToScore = stats.failed_to_score || {};
+
       return {
-        goalsForHome: stats.goals.for.average.home || "1.5",
-        goalsForAway: stats.goals.for.average.away || "1.2",
-        goalsAgainstHome: stats.goals.against.average.home || "1.1",
-        goalsAgainstAway: stats.goals.against.average.away || "1.3",
-        playedHome: (stats.fixtures && stats.fixtures.played && stats.fixtures.played.home) || 0,
-        playedAway: (stats.fixtures && stats.fixtures.played && stats.fixtures.played.away) || 0,
-        cleanSheetsHome: (stats.clean_sheet && stats.clean_sheet.home) || 0,
-        cleanSheetsAway: (stats.clean_sheet && stats.clean_sheet.away) || 0,
-        failedToScoreHome: (stats.failed_to_score && stats.failed_to_score.home) || 0,
-        failedToScoreAway: (stats.failed_to_score && stats.failed_to_score.away) || 0,
-        winsHome: (stats.fixtures && stats.fixtures.wins && stats.fixtures.wins.home) || 0,
-        winsAway: (stats.fixtures && stats.fixtures.wins && stats.fixtures.wins.away) || 0,
-        drawsHome: (stats.fixtures && stats.fixtures.draws && stats.fixtures.draws.home) || 0,
-        drawsAway: (stats.fixtures && stats.fixtures.draws && stats.fixtures.draws.away) || 0,
-        lossesHome: (stats.fixtures && stats.fixtures.loses && stats.fixtures.loses.home) || 0,
-        lossesAway: (stats.fixtures && stats.fixtures.loses && stats.fixtures.loses.away) || 0,
+        goalsForHome: goalsForAvg.home || "1.5",
+        goalsForAway: goalsForAvg.away || "1.2",
+        goalsAgainstHome: goalsAgainstAvg.home || "1.1",
+        goalsAgainstAway: goalsAgainstAvg.away || "1.3",
+        playedHome: played.home || 0,
+        playedAway: played.away || 0,
+        cleanSheetsHome: cleanSheet.home || 0,
+        cleanSheetsAway: cleanSheet.away || 0,
+        failedToScoreHome: failedToScore.home || 0,
+        failedToScoreAway: failedToScore.away || 0,
+        winsHome: wins.home || 0,
+        winsAway: wins.away || 0,
+        drawsHome: draws.home || 0,
+        drawsAway: draws.away || 0,
+        lossesHome: losses.home || 0,
+        lossesAway: losses.away || 0,
         form: stats.form || ""
       };
     }
@@ -125,16 +149,19 @@ async function getTeamStats(teamId, leagueId, headers, baseUrl) {
 
 // --- Helper: Get Head to Head Matches from Football API ---
 async function getH2HMatches(homeId, awayId, headers, baseUrl) {
-  if (!baseUrl || !headers) return [];
+  if (!homeId || !awayId || !baseUrl || !headers) return [];
   try {
     const response = await fetch(`${baseUrl}/fixtures/h2h?h2h=${homeId}-${awayId}&last=3`, { headers });
     const data = await response.json();
     if (data && data.response) {
-      return data.response.map(item => ({
-        homeScore: item.goals.home,
-        awayScore: item.goals.away,
-        date: new Date(item.fixture.date).toLocaleDateString('tr-TR')
-      }));
+      return data.response.map(item => {
+        const goals = item.goals || {};
+        return {
+          homeScore: goals.home !== null ? goals.home : 0,
+          awayScore: goals.away !== null ? goals.away : 0,
+          date: item.fixture && item.fixture.date ? new Date(item.fixture.date).toLocaleDateString('tr-TR') : ""
+        };
+      });
     }
   } catch (err) {
     console.error(`Error getting H2H between ${homeId} and ${awayId}:`, err);
@@ -145,7 +172,7 @@ async function getH2HMatches(homeId, awayId, headers, baseUrl) {
 // --- Helper: Form Multiplier Calculation ---
 function getFormMultiplier(formString) {
   if (!formString) return 1.0;
-  const recentForm = formString.slice(-5).toUpperCase();
+  const recentForm = String(formString).slice(-5).toUpperCase();
   let adjustment = 0;
   for (let i = 0; i < recentForm.length; i++) {
     const char = recentForm[i];
@@ -163,10 +190,21 @@ function factorial(n) {
   return r;
 }
 
+function poissonProbability(k, lambda) {
+  if (isNaN(lambda) || lambda <= 0) return k === 0 ? 1 : 0;
+  return (Math.exp(-lambda) * Math.pow(lambda, k)) / factorial(k);
+}
+
 // Dixon-Coles Adjusted Poisson Model
 function calculateMatchPredictions(homeScoredAvg, homeConcededAvg, awayScoredAvg, awayConcededAvg) {
-  const lambdaHome = (homeScoredAvg + awayConcededAvg) / 2;
-  const lambdaAway = (awayScoredAvg + homeConcededAvg) / 2;
+  // Ensure valid numeric values for lambdas
+  const hScored = isNaN(homeScoredAvg) ? 1.6 : homeScoredAvg;
+  const hConceded = isNaN(homeConcededAvg) ? 1.1 : homeConcededAvg;
+  const aScored = isNaN(awayScoredAvg) ? 1.3 : awayScoredAvg;
+  const aConceded = isNaN(awayConcededAvg) ? 1.4 : awayConcededAvg;
+
+  const lambdaHome = (hScored + aConceded) / 2;
+  const lambdaAway = (aScored + hConceded) / 2;
 
   const maxGoals = 5;
   const homeProbabilities = [];
@@ -214,20 +252,22 @@ function calculateMatchPredictions(homeScoredAvg, homeConcededAvg, awayScoredAvg
   }
 
   const totalSum = homeWinProb + drawProb + awayWinProb;
-  homeWinProb /= totalSum;
-  drawProb /= totalSum;
-  awayWinProb /= totalSum;
+  const safeSum = totalSum > 0 ? totalSum : 1.0;
+
+  homeWinProb /= safeSum;
+  drawProb /= safeSum;
+  awayWinProb /= safeSum;
 
   scorelist.forEach(s => {
-    s.probability = Math.round((s.probability / totalSum) * 1000) / 10;
+    s.probability = Math.round((s.probability / safeSum) * 1000) / 10;
   });
   scorelist.sort((a, b) => b.probability - a.probability);
 
   return {
     probabilities: {
-      homeWin: Math.round(homeWinProb * 100),
-      draw: Math.round(drawProb * 100),
-      awayWin: Math.round(awayWinProb * 100)
+      homeWin: Math.round(homeWinProb * 100) || 34,
+      draw: Math.round(drawProb * 100) || 33,
+      awayWin: Math.round(awayWinProb * 100) || 33
     },
     scorePredictions: scorelist.slice(0, 3)
   };
@@ -287,10 +327,13 @@ module.exports = async (req, res) => {
       let awayTeamInfo = null;
       let h2h = [];
 
-      // Call live API if keys are present
-      if (headers && apiUrl) {
-        homeTeamInfo = await searchTeam(match.homeTeam.name, headers, apiUrl);
-        awayTeamInfo = await searchTeam(match.awayTeam.name, headers, apiUrl);
+      const homeName = match.homeTeam && match.homeTeam.name ? String(match.homeTeam.name).trim() : "";
+      const awayName = match.awayTeam && match.awayTeam.name ? String(match.awayTeam.name).trim() : "";
+
+      // Call live API if keys are present and team names are not empty
+      if (headers && apiUrl && homeName && awayName) {
+        homeTeamInfo = await searchTeam(homeName, headers, apiUrl);
+        awayTeamInfo = await searchTeam(awayName, headers, apiUrl);
         if (homeTeamInfo && awayTeamInfo) {
           h2h = await getH2HMatches(homeTeamInfo.id, awayTeamInfo.id, headers, apiUrl);
         }
@@ -298,16 +341,16 @@ module.exports = async (req, res) => {
 
       // 1. Establish Home Team data
       const homeTeam = {
-        name: match.homeTeam.name,
-        logo: homeTeamInfo ? homeTeamInfo.logo : match.homeTeam.logo,
-        code: homeTeamInfo ? homeTeamInfo.code : (match.homeTeam.code || match.homeTeam.name.slice(0, 3).toUpperCase())
+        name: homeName,
+        logo: homeTeamInfo ? homeTeamInfo.logo : (match.homeTeam && match.homeTeam.logo ? match.homeTeam.logo : ""),
+        code: homeTeamInfo ? homeTeamInfo.code : (match.homeTeam && match.homeTeam.code ? match.homeTeam.code : homeName.slice(0, 3).toUpperCase())
       };
 
       // 2. Establish Away Team data
       const awayTeam = {
-        name: match.awayTeam.name,
-        logo: awayTeamInfo ? awayTeamInfo.logo : match.awayTeam.logo,
-        code: awayTeamInfo ? awayTeamInfo.code : (match.awayTeam.code || match.awayTeam.name.slice(0, 3).toUpperCase())
+        name: awayName,
+        logo: awayTeamInfo ? awayTeamInfo.logo : (match.awayTeam && match.awayTeam.logo ? match.awayTeam.logo : ""),
+        code: awayTeamInfo ? awayTeamInfo.code : (match.awayTeam && match.awayTeam.code ? match.awayTeam.code : awayName.slice(0, 3).toUpperCase())
       };
 
       // 3. Fetch/Generate goals average stats with form scaling and Bayesian Smoothing
@@ -366,7 +409,7 @@ module.exports = async (req, res) => {
       let smoothedAwayScored = rawAwayScored;
       let smoothedAwayConceded = rawAwayConceded;
 
-      if (headers && apiUrl) {
+      if (headers && apiUrl && homeName && awayName) {
         if (homePlayed < 5) {
           smoothedHomeScored = (rawHomeScored * homePlayed + 1.5 * (5 - homePlayed)) / 5;
           smoothedHomeConceded = (rawHomeConceded * homePlayed + 1.2 * (5 - homePlayed)) / 5;
@@ -376,11 +419,11 @@ module.exports = async (req, res) => {
           smoothedAwayConceded = (rawAwayConceded * awayPlayed + 1.5 * (5 - awayPlayed)) / 5;
         }
       } else {
-        // Fallback simulated values if no API connection
-        rawHomeScored = parseFloat((Math.random() * 1.5 + 1.1).toFixed(2));
-        rawHomeConceded = parseFloat((Math.random() * 1.4 + 0.6).toFixed(2));
-        rawAwayScored = parseFloat((Math.random() * 1.4 + 0.8).toFixed(2));
-        rawAwayConceded = parseFloat((Math.random() * 1.5 + 0.7).toFixed(2));
+        // Fallback simulated values if no API connection or empty team names
+        rawHomeScored = 1.6;
+        rawHomeConceded = 1.1;
+        rawAwayScored = 1.3;
+        rawAwayConceded = 1.4;
         
         smoothedHomeScored = rawHomeScored;
         smoothedHomeConceded = rawHomeConceded;
@@ -398,15 +441,21 @@ module.exports = async (req, res) => {
 
       // 5. Construct stats object using raw values for UI display
       const statistics = {
-        goalsScoredAvg: [parseFloat(rawHomeScored.toFixed(2)), parseFloat(rawAwayScored.toFixed(2))],
-        goalsConcededAvg: [parseFloat(rawHomeConceded.toFixed(2)), parseFloat(rawAwayConceded.toFixed(2))],
+        goalsScoredAvg: [
+          isNaN(rawHomeScored) ? 0.0 : parseFloat(rawHomeScored.toFixed(2)), 
+          isNaN(rawAwayScored) ? 0.0 : parseFloat(rawAwayScored.toFixed(2))
+        ],
+        goalsConcededAvg: [
+          isNaN(rawHomeConceded) ? 0.0 : parseFloat(rawHomeConceded.toFixed(2)), 
+          isNaN(rawAwayConceded) ? 0.0 : parseFloat(rawAwayConceded.toFixed(2))
+        ],
         cleanSheetPct: [
           homePlayed > 0 ? Math.round((homeCleanSheets / homePlayed) * 100) : 0,
           awayPlayed > 0 ? Math.round((awayCleanSheets / awayPlayed) * 100) : 0
         ],
         failedToScorePct: [
           homePlayed > 0 ? Math.round((homeFailedToScore / homePlayed) * 100) : 0,
-          awayPlayed > 0 ? Math.round((awayFailedToScore / awayPlayed) * 100) : 0
+          awayPlayed > 0 ? Math.round((awayCleanSheets / awayPlayed) * 100) : 0
         ],
         winPct: [
           homePlayed > 0 ? Math.round((homeWinsCount / homePlayed) * 100) : 0,
@@ -422,9 +471,14 @@ module.exports = async (req, res) => {
         ]
       };
 
-      // xG approximations
-      statistics.xgScored = [parseFloat((rawHomeScored * 0.9 + 0.2).toFixed(2)), parseFloat((rawAwayScored * 0.85 + 0.25).toFixed(2))];
-      statistics.xgConceded = [parseFloat((rawHomeConceded * 0.85 + 0.2).toFixed(2)), parseFloat((rawAwayConceded * 0.9 + 0.15).toFixed(2))];
+      // xG approximations (prevent NaN propagating)
+      const hScoredVal = isNaN(rawHomeScored) ? 1.6 : rawHomeScored;
+      const aScoredVal = isNaN(rawAwayScored) ? 1.3 : rawAwayScored;
+      const hConcededVal = isNaN(rawHomeConceded) ? 1.1 : rawHomeConceded;
+      const aConcededVal = isNaN(rawAwayConceded) ? 1.4 : rawAwayConceded;
+
+      statistics.xgScored = [parseFloat((hScoredVal * 0.9 + 0.2).toFixed(2)), parseFloat((aScoredVal * 0.85 + 0.25).toFixed(2))];
+      statistics.xgConceded = [parseFloat((hConcededVal * 0.85 + 0.2).toFixed(2)), parseFloat((aConcededVal * 0.9 + 0.15).toFixed(2))];
 
       // 6. Build final match object
       const fullMatch = {
@@ -443,20 +497,22 @@ module.exports = async (req, res) => {
       updatedMatches.push(fullMatch);
     }
 
-    // Write updated bulletin to Firestore
-    const db = getFirestoreDb();
-    if (db) {
-      const docRef = db.collection('bulletin').doc('current');
-      await docRef.set({
-        matches: updatedMatches,
-        lastUpdated: new Date().toISOString()
-      });
-      console.log("Successfully wrote active bulletin to Firestore.");
-    } else {
-      console.warn("Database connection unavailable. Synced bulletin generated locally but not saved to cloud.");
+    // Write updated bulletin to Firestore safely (do not let DB failures crash the endpoint)
+    try {
+      const db = getFirestoreDb();
+      if (db) {
+        const docRef = db.collection('bulletin').doc('current');
+        await docRef.set({
+          matches: updatedMatches,
+          lastUpdated: new Date().toISOString()
+        });
+        console.log("Successfully wrote active bulletin to Firestore.");
+      }
+    } catch (dbError) {
+      console.error("Firestore write failed, bypassing storage save:", dbError);
     }
 
-    res.status(200).json({ success: true, matches: updatedMatches, isDemo: !db });
+    res.status(200).json({ success: true, matches: updatedMatches, isDemo: !getFirestoreDb() });
   } catch (error) {
     console.error("Critical error in /api/sync:", error);
     res.status(500).json({ error: "Failed to compile and sync bulletin matches.", message: error.message });
