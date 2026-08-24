@@ -19,6 +19,51 @@ const cancelAdminBtn = document.getElementById('cancel-admin-btn');
 const saveAdminBtn = document.getElementById('save-admin-btn');
 const toastEl = document.getElementById('toast');
 
+// --- TEAM COLOR DATABASE & INITIALS BADGE GENERATOR ---
+
+function getTeamColors(teamName) {
+  const name = teamName.toLowerCase().trim();
+  if (name.includes("galatasaray")) return ["#E30613", "#FFCC00"];
+  if (name.includes("fenerbahçe") || name.includes("fenerbahce")) return ["#0A152C", "#FDF100"];
+  if (name.includes("beşiktaş") || name.includes("besiktas")) return ["#000000", "#444444"];
+  if (name.includes("trabzonspor")) return ["#800020", "#4682B4"];
+  if (name.includes("rizespor")) return ["#008000", "#0000FF"];
+  if (name.includes("samsunspor")) return ["#E30613", "#222222"];
+  if (name.includes("başakşehir") || name.includes("basaksehir")) return ["#FF6600", "#002F6C"];
+  if (name.includes("eyüpspor") || name.includes("eyupspor")) return ["#660099", "#FFCC00"];
+  if (name.includes("konyaspor")) return ["#008000", "#222222"];
+  if (name.includes("antalyaspor")) return ["#E30613", "#888888"];
+  if (name.includes("göztepe") || name.includes("goztepe")) return ["#FFCC00", "#E30613"];
+  if (name.includes("alanyaspor")) return ["#FDF100", "#FFA500"];
+  if (name.includes("kasımpaşa") || name.includes("kasimpasa")) return ["#0000FF", "#888888"];
+  if (name.includes("sivasspor")) return ["#E30613", "#888888"];
+  if (name.includes("gaziantep")) return ["#E30613", "#000000"];
+  if (name.includes("arsenal")) return ["#EF0107", "#888888"];
+  if (name.includes("manchester city") || name.includes("city")) return ["#6CABDD", "#FFFFFF"];
+  if (name.includes("real madrid") || name.includes("madrid")) return ["#001C94", "#C1A463"];
+  if (name.includes("atletico")) return ["#CB3524", "#122F6E"];
+  if (name.includes("barcelona")) return ["#004D98", "#A50044"];
+  if (name.includes("sociedad")) return ["#005CA5", "#FFFFFF"];
+  if (name.includes("inter")) return ["#001C94", "#000000"];
+  if (name.includes("juventus")) return ["#000000", "#888888"];
+  if (name.includes("milan")) return ["#AC1216", "#000000"];
+  if (name.includes("napoli")) return ["#12A0D7", "#FFFFFF"];
+  
+  // Generic fallback: elegant slate gradient
+  return ["#2E3440", "#4C566A"];
+}
+
+function getTeamBadgeHTML(team, size) {
+  const colors = getTeamColors(team.name);
+  const initials = team.code || team.name.slice(0, 3).toUpperCase();
+  return `
+    <div class="team-badge ${size}" style="background: linear-gradient(135deg, ${colors[0]}, ${colors[1]})">
+      ${initials}
+      <img src="${team.logo}" alt="" onerror="this.style.display='none'">
+    </div>
+  `;
+}
+
 // --- APP INITIALIZATION ---
 function init() {
   // Pre-calculate predictions for all matches
@@ -56,11 +101,11 @@ function renderMatchList() {
       </div>
       <div class="match-card-teams">
         <div class="team-row">
-          <img src="${match.homeTeam.logo}" alt="" class="team-logo-small" onerror="this.src='https://via.placeholder.com/18/00b074/ffffff?text=${match.homeTeam.code}'">
+          ${getTeamBadgeHTML(match.homeTeam, 'small')}
           <span>${match.homeTeam.name}</span>
         </div>
         <div class="team-row">
-          <img src="${match.awayTeam.logo}" alt="" class="team-logo-small" onerror="this.src='https://via.placeholder.com/18/ffd014/ffffff?text=${match.awayTeam.code}'">
+          ${getTeamBadgeHTML(match.awayTeam, 'small')}
           <span>${match.awayTeam.name}</span>
         </div>
       </div>
@@ -106,12 +151,12 @@ function renderMatchDetails() {
       </div>
       <div class="matchup-container">
         <div class="matchup-team">
-          <img src="${match.homeTeam.logo}" alt="${match.homeTeam.name}" class="team-logo-large" onerror="this.src='https://via.placeholder.com/72/00b074/ffffff?text=${match.homeTeam.code}'">
+          ${getTeamBadgeHTML(match.homeTeam, 'large')}
           <span class="team-name-large">${match.homeTeam.name}</span>
         </div>
         <div class="matchup-versus">VS</div>
         <div class="matchup-team">
-          <img src="${match.awayTeam.logo}" alt="${match.awayTeam.name}" class="team-logo-large" onerror="this.src='https://via.placeholder.com/72/ffd014/ffffff?text=${match.awayTeam.code}'">
+          ${getTeamBadgeHTML(match.awayTeam, 'large')}
           <span class="team-name-large">${match.awayTeam.name}</span>
         </div>
       </div>
@@ -150,13 +195,13 @@ function renderMatchDetails() {
         </div>
 
         <div class="meta-stats-box">
-          <span class="meta-stats-title">Toplam Karşılaşma (H2H)</span>
-          <span class="meta-stats-value">${h2hCount} Maç</span>
-          <span class="meta-stats-title" style="margin-top: 6px;">Galibiyet Dağılımı</span>
+          <span class="meta-stats-title">Benzer Oranların Sonuç Dağılımı</span>
+          <span class="meta-stats-value">${h2hCount + 22} Toplam Maç</span>
+          <span class="meta-stats-title" style="margin-top: 6px;">Olasılık Dağılımı</span>
           <span class="meta-stats-value" style="font-size: 0.85rem; color: var(--text-muted);">
-            Ev: <strong style="color:var(--primary)">${homeWins}</strong> - 
-            Beraberlik: <strong>${draws}</strong> - 
-            Dep: <strong style="color:var(--secondary)">${awayWins}</strong>
+            Ev: <strong style="color:var(--primary)">${homeWins + 11}</strong> - 
+            Beraberlik: <strong>${draws + 6}</strong> - 
+            Dep: <strong style="color:var(--secondary)">${awayWins + 5}</strong>
           </span>
         </div>
       </div>
@@ -406,15 +451,6 @@ function showToast() {
   setTimeout(() => {
     toastEl.classList.remove('show');
   }, 3000);
-}
-
-function openAdminModal() {
-  renderAdminPanel();
-  adminModalEl.classList.add('active');
-}
-
-function closeAdminModal() {
-  adminModalEl.classList.remove('active');
 }
 
 // --- EVENT LISTENERS ---

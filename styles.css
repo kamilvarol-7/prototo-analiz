@@ -78,7 +78,9 @@ body {
   border-right: 1px solid var(--panel-border);
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
 }
 
 .sidebar-header {
@@ -87,6 +89,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
 }
 
 .brand {
@@ -133,6 +136,7 @@ body {
 .match-list-container {
   flex: 1;
   overflow-y: auto;
+  min-height: 0; /* Critical for scroll */
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -159,7 +163,7 @@ body {
   transition: var(--transition-smooth);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   position: relative;
   overflow: hidden;
 }
@@ -204,21 +208,54 @@ body {
 .match-card-teams {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 }
 
 .team-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-size: 0.9rem;
   font-weight: 500;
 }
 
-.team-logo-small {
-  width: 18px;
-  height: 18px;
+/* Team Badges */
+.team-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0;
+}
+
+.team-badge.small {
+  width: 22px;
+  height: 22px;
+  font-size: 0.65rem;
+}
+
+.team-badge.large {
+  width: 72px;
+  height: 72px;
+  font-size: 1.6rem;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+}
+
+.team-badge img {
+  position: absolute;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  background-color: transparent;
 }
 
 /* --- MAIN PANEL (ANALYSIS) --- */
@@ -238,6 +275,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  flex-shrink: 0;
 }
 
 .header-top {
@@ -271,13 +309,6 @@ body {
   align-items: center;
   gap: 16px;
   flex: 1;
-}
-
-.team-logo-large {
-  width: 72px;
-  height: 72px;
-  object-fit: contain;
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
 }
 
 .team-name-large {
