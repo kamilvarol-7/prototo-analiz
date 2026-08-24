@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProToto - Premium Spor Toto Analiz</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- LEFT SIDEBAR: MATCHES LIST -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="brand">
+          <div class="brand-icon"></div>
+          <h1 class="brand-title">Pro<span>Toto</span></h1>
+        </div>
+        <button class="admin-toggle-btn" id="open-admin-btn">Yönetim</button>
+      </div>
+      
+      <div class="match-list-container">
+        <div class="week-title" id="week-label">Spor Toto Bülteni</div>
+        <div id="match-list">
+          <!-- Dynamically populated via JS -->
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN PANELS: DETAILS & GRAPHS -->
+    <main class="main-content" id="main-content">
+      <!-- Dynamically populated via JS -->
+    </main>
+
+  </div>
+
+  <!-- ADMIN CONTROL PANEL MODAL -->
+  <div class="admin-modal" id="admin-modal">
+    <div class="admin-box">
+      <div class="admin-header">
+        <h2 class="admin-title">Spor Toto Haftalık Bülten Yönetimi</h2>
+        <button class="admin-close-btn" id="close-admin-btn">&times;</button>
+      </div>
+      
+      <div class="admin-body">
+        <div class="admin-info-banner">
+          <strong>💡 Bilgi:</strong> Buradan haftalık 15 maçı, takımları ve resmi Spor Toto oynanma yüzdelerini düzenleyebilirsiniz. 
+          "Hesapla ve Yayınla" butonuna bastığınızda, sistem otomatik olarak son istatistikleri çekecek, Poisson Olasılık Motorunu çalıştıracak ve kullanıcı analizlerini güncelleyecektir.
+        </div>
+        
+        <div class="admin-table-container">
+          <div class="admin-table-header">
+            <div>Sıra</div>
+            <div>Ev Sahibi Takım</div>
+            <div>Deplasman Takım</div>
+            <div>Oynanma % (Ev)</div>
+            <div>Oynanma % (Ber.)</div>
+            <div>Oynanma % (Dep)</div>
+          </div>
+          
+          <div id="admin-rows-container">
+            <!-- Dynamically populated via JS -->
+          </div>
+        </div>
+      </div>
+      
+      <div class="admin-footer">
+        <button class="action-btn cancel" id="cancel-admin-btn">Vazgeç</button>
+        <button class="action-btn publish" id="save-admin-btn">Hesapla ve Yayınla</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">Veriler yeniden hesaplandı ve yayınlandı!</div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
