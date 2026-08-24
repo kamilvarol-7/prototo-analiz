@@ -100,20 +100,27 @@ async function searchTeam(teamName, headers, baseUrl) {
 }
 
 // --- Helper: Get Team Goals Stats, Matches Played and Form from Football API ---
-async function getTeamStats(teamId, leagueId, headers, baseUrl) {
+async function getTeamStats(teamId, leagueId, headers, baseUrl, season) {
   if (!teamId || !baseUrl || !headers) return null;
   try {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth(); // 0 = Jan, 7 = Aug
-    const currentYear = month >= 7 ? year : year - 1;
+    let response = await fetch(`${baseUrl}/teams/statistics?league=${leagueId}&season=${season}&team=${teamId}`, { headers });
+    let data = await response.json();
     
-    const response = await fetch(`${baseUrl}/teams/statistics?league=${leagueId}&season=${currentYear}&team=${teamId}`, { headers });
-    const data = await response.json();
-    
-    // Capture API errors if returned
+    // Auto-detect free plan season limitations and retry with recommended year
     if (data && data.errors && Object.keys(data.errors).length > 0) {
-      apiError = Object.values(data.errors).join(", ");
+      const errStr = Object.values(data.errors).join(", ");
+      if (errStr.includes("Free plans do not have access to this season")) {
+        let fallbackSeason = 2024;
+        const yearMatch = errStr.match(/to (\d{4})/);
+        if (yearMatch) {
+          fallbackSeason = parseInt(yearMatch[1]);
+        }
+        console.warn(`Free plan restriction hit. Retrying stats with fallback season: ${fallbackSeason}`);
+        response = await fetch(`${baseUrl}/teams/statistics?league=${leagueId}&season=${fallbackSeason}&team=${teamId}`, { headers });
+        data = await response.json();
+      } else {
+        apiError = errStr;
+      }
     }
 
     if (data && data.response) {
@@ -342,6 +349,33 @@ module.exports = async (req, res) => {
   try {
     const updatedMatches = [];
 
+    // Calculate current live season
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    let currentYear = month >= 7 ? year : year - 1;
+
+    // Check if the league query requires fallback
+    let fallbackSeason = null;
+    if (headers && apiUrl) {
+      try {
+        let res203 = await fetch(`${apiUrl}/teams?league=203&season=${currentYear}`, { headers });
+        let data203 = await res203.json();
+        if (data203 && data203.errors && Object.keys(data203.errors).length > 0) {
+          const errStr = Object.values(data203.errors).join(", ");
+          if (errStr.includes("Free plans do not have access to this season")) {
+            fallbackSeason = 2024;
+            const yearMatch = errStr.match(/to (\d{4})/);
+            if (yearMatch) fallbackSeason = parseInt(yearMatch[1]);
+          }
+        }
+      } catch (e) {
+        console.error("Auto season validation failed:", e);
+      }
+    }
+
+    const querySeason = fallbackSeason || currentYear;
+
     for (let i = 0; i < matches.length; i++) {
       const match = matches[i];
       const leagueName = match.league || "Süper Lig";
@@ -399,8 +433,8 @@ module.exports = async (req, res) => {
       let awayMult = 1.0;
 
       if (homeTeamInfo && awayTeamInfo && headers && apiUrl) {
-        const homeStats = await getTeamStats(homeTeamInfo.id, leagueId, headers, apiUrl);
-        const awayStats = await getTeamStats(awayTeamInfo.id, leagueId, headers, apiUrl);
+        const homeStats = await getTeamStats(homeTeamInfo.id, leagueId, headers, apiUrl, querySeason);
+        const awayStats = await getTeamStats(awayTeamInfo.id, leagueId, headers, apiUrl, querySeason);
 
         if (homeStats) {
           homePlayed = parseInt(homeStats.playedHome) || 0;
