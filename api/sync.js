@@ -3,6 +3,9 @@ const { getFirestoreDb } = require('./firebase-admin-init');
 // Memory cache to store team search results during execution and protect API quota limits
 const searchCache = {};
 
+// Request-level error tracker to capture API errors (e.g. invalid key, limit reached)
+let apiError = null;
+
 // --- Helper: Clean and Sanitize Team Names for API-Football Fuzzy Search ---
 function sanitizeTeamNameForSearch(name) {
   if (!name) return "";
@@ -20,7 +23,6 @@ function sanitizeTeamNameForSearch(name) {
                .replace(/\bfk\b/g, '')
                .replace(/\bsk\b/g, '')
                .replace(/\bbs\b/g, '')
-               .replace(/\bbb\b/g, '')
                .replace(/\bbb\b/g, '')
                .trim();
   return clean;
@@ -62,6 +64,12 @@ async function searchTeam(teamName, headers, baseUrl) {
   try {
     const response = await fetch(`${baseUrl}/teams?search=${encodeURIComponent(cleanName)}`, { headers });
     const data = await response.json();
+    
+    // Capture API errors if returned
+    if (data && data.errors && Object.keys(data.errors).length > 0) {
+      apiError = Object.values(data.errors).join(", ");
+    }
+
     if (data && data.response && data.response.length > 0) {
       let teamObj = data.response[0];
       
@@ -102,6 +110,12 @@ async function getTeamStats(teamId, leagueId, headers, baseUrl) {
     
     const response = await fetch(`${baseUrl}/teams/statistics?league=${leagueId}&season=${currentYear}&team=${teamId}`, { headers });
     const data = await response.json();
+    
+    // Capture API errors if returned
+    if (data && data.errors && Object.keys(data.errors).length > 0) {
+      apiError = Object.values(data.errors).join(", ");
+    }
+
     if (data && data.response) {
       const stats = data.response;
       
@@ -153,6 +167,12 @@ async function getH2HMatches(homeId, awayId, headers, baseUrl) {
   try {
     const response = await fetch(`${baseUrl}/fixtures/h2h?h2h=${homeId}-${awayId}&last=3`, { headers });
     const data = await response.json();
+    
+    // Capture API errors if returned
+    if (data && data.errors && Object.keys(data.errors).length > 0) {
+      apiError = Object.values(data.errors).join(", ");
+    }
+
     if (data && data.response) {
       return data.response.map(item => {
         const goals = item.goals || {};
@@ -190,14 +210,8 @@ function factorial(n) {
   return r;
 }
 
-function poissonProbability(k, lambda) {
-  if (isNaN(lambda) || lambda <= 0) return k === 0 ? 1 : 0;
-  return (Math.exp(-lambda) * Math.pow(lambda, k)) / factorial(k);
-}
-
 // Dixon-Coles Adjusted Poisson Model
 function calculateMatchPredictions(homeScoredAvg, homeConcededAvg, awayScoredAvg, awayConcededAvg) {
-  // Ensure valid numeric values for lambdas
   const hScored = isNaN(homeScoredAvg) ? 1.6 : homeScoredAvg;
   const hConceded = isNaN(homeConcededAvg) ? 1.1 : homeConcededAvg;
   const aScored = isNaN(awayScoredAvg) ? 1.3 : awayScoredAvg;
@@ -298,6 +312,9 @@ module.exports = async (req, res) => {
     res.status(400).json({ error: "Invalid matches array payload." });
     return;
   }
+
+  // Reset tracker at start of execution
+  apiError = null;
 
   // Detect API configs from Environment Variables with default URL fallback
   const apiKey = process.env.FOOTBALL_API_KEY;
@@ -512,7 +529,7 @@ module.exports = async (req, res) => {
       console.error("Firestore write failed, bypassing storage save:", dbError);
     }
 
-    res.status(200).json({ success: true, matches: updatedMatches, isDemo: !getFirestoreDb() });
+    res.status(200).json({ success: true, matches: updatedMatches, isDemo: !getFirestoreDb(), apiError });
   } catch (error) {
     console.error("Critical error in /api/sync:", error);
     res.status(500).json({ error: "Failed to compile and sync bulletin matches.", message: error.message });

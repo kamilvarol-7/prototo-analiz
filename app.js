@@ -582,24 +582,14 @@ async function saveAdminData() {
     if (syncData.success && syncData.matches) {
       appState.matches = syncData.matches;
       appState.isDemo = syncData.isDemo;
-      
-      // Render debug team IDs inside a green pre box at the top of the modal
-      if (syncData.debugTeams) {
-        let debugBox = document.getElementById('debug-teams-box');
-        if (!debugBox) {
-          debugBox = document.createElement('pre');
-          debugBox.id = 'debug-teams-box';
-          debugBox.style.cssText = 'background:#1a1a1a; color:#00ff00; padding:15px; border-radius:8px; max-height:200px; overflow:auto; margin:15px; font-size:0.8rem; border:1px solid #333; word-break:break-all; white-space:pre-wrap;';
-          const modalBody = adminModalEl.querySelector('.admin-body');
-          modalBody.insertBefore(debugBox, modalBody.firstChild);
-        }
-        debugBox.innerText = "KOPYALA-YAPIŞTIR YAPIN:\n" + JSON.stringify(syncData.debugTeams);
-      }
-
       renderMatchList();
       renderMatchDetails();
       showToast();
-      // Keep modal open to let the user copy the IDs
+      closeAdminModal();
+
+      if (syncData.apiError) {
+        alert("Uyarı: İstatistikler hesaplandı ancak API servisi hata döndü:\n" + syncData.apiError + "\n\nBu yüzden logolar ve istatistikler tam yüklenememiş olabilir. Lütfen Vercel panelinizden FOOTBALL_API_KEY anahtarınızı kontrol edin.");
+      }
     } else {
       alert("Hata: " + (syncData.error || "İstatistikler senkronize edilemedi."));
     }
