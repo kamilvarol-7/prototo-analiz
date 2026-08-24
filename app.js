@@ -79,6 +79,7 @@ function init() {
   renderMatchList();
   renderMatchDetails();
   setupEventListeners();
+  checkAdminAccess();
 }
 
 // --- VIEW RENDERING ---
@@ -461,15 +462,42 @@ function closeAdminModal() {
   adminModalEl.classList.remove('active');
 }
 
+// --- HIDDEN ADMIN CHECK ROUTINE ---
+function checkAdminAccess() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const isAdmin = urlParams.get('admin') === 'true';
+  
+  if (isAdmin) {
+    const sidebarHeader = document.querySelector('.sidebar-header');
+    if (sidebarHeader) {
+      // Create and inject a beautiful settings cog icon
+      const gearBtn = document.createElement('button');
+      gearBtn.id = 'open-admin-btn';
+      gearBtn.className = 'admin-toggle-btn';
+      gearBtn.style.padding = '6px';
+      gearBtn.style.display = 'flex';
+      gearBtn.style.alignItems = 'center';
+      gearBtn.style.justifyContent = 'center';
+      gearBtn.style.borderRadius = '50%';
+      gearBtn.style.width = '32px';
+      gearBtn.style.height = '32px';
+      gearBtn.title = 'Yönetim Paneli';
+      
+      // Inject SVG Gear icon
+      gearBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="color:var(--primary)">
+          <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.17.311c.58.227.874.872.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.17a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.17-.311a1.464 1.464 0 0 1-.872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.17a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.86z"/>
+        </svg>
+      `;
+      
+      gearBtn.addEventListener('click', openAdminModal);
+      sidebarHeader.appendChild(gearBtn);
+    }
+  }
+}
+
 // --- EVENT LISTENERS ---
 function setupEventListeners() {
-  // Select the brand element and make it function as the admin panel toggle
-  const brandEl = document.querySelector('.brand');
-  if (brandEl) {
-    brandEl.style.cursor = 'pointer';
-    brandEl.addEventListener('click', openAdminModal);
-  }
-  
   closeAdminBtn.addEventListener('click', closeAdminModal);
   cancelAdminBtn.addEventListener('click', closeAdminModal);
   saveAdminBtn.addEventListener('click', saveAdminData);
