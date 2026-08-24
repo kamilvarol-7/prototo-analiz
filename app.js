@@ -610,5 +610,40 @@ function openAdminModal() {
   adminModalEl.classList.add('active');
 }
 
+function closeAdminModal() {
+  adminModalEl.classList.remove('active');
+}
+
+// --- HIDDEN ADMIN CHECK ROUTINE ---
+function checkAdminAccess() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const isAdmin = urlParams.get('admin') === 'true';
+  const adminBtn = document.getElementById('open-admin-btn');
+  
+  if (adminBtn) {
+    if (isAdmin) {
+      adminBtn.style.display = 'flex';
+    } else {
+      adminBtn.style.display = 'none';
+    }
+  }
+}
+
+// --- EVENT LISTENERS ---
+function setupEventListeners() {
+  closeAdminBtn.addEventListener('click', closeAdminModal);
+  cancelAdminBtn.addEventListener('click', closeAdminModal);
+  saveAdminBtn.addEventListener('click', saveAdminData);
+  
+  const adminBtn = document.getElementById('open-admin-btn');
+  if (adminBtn) {
+    adminBtn.addEventListener('click', openAdminModal);
+  }
+  
+  adminModalEl.addEventListener('click', (e) => {
+    if (e.target === adminModalEl) closeAdminModal();
+  });
+}
+
 // Start application
 window.addEventListener('DOMContentLoaded', init);
