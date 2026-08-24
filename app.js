@@ -5,6 +5,17 @@ let appState = {
   isDemo: true
 };
 
+// Available teams for select dropdown in admin panel
+const TEAMS_LIST = [
+  "Galatasaray", "Fenerbahçe", "Beşiktaş", "Trabzonspor", "Başakşehir", 
+  "Eyüpspor", "Çaykur Rizespor", "Samsunspor", "Antalyaspor", "Konyaspor",
+  "Göztepe", "Alanyaspor", "Kasımpaşa", "Bodrum FK", "Gaziantep FK", "Sivasspor", 
+  "Kayserispor", "Hatayspor", "Adana Demirspor", "Fatih Karagümrük", "Pendikspor", 
+  "Arsenal", "Manchester City", "Chelsea", "Aston Villa", "Liverpool", "Manchester United",
+  "Real Madrid", "Atletico Madrid", "Barcelona", "Real Sociedad", "Inter", 
+  "Juventus", "Milan", "Napoli", "Bayern Munich", "Borussia Dortmund", "PSG"
+].sort();
+
 // Cache DOM elements
 const matchListEl = document.getElementById('match-list');
 const mainContentEl = document.getElementById('main-content');
@@ -398,13 +409,26 @@ function renderAdminPanel() {
     row.className = 'admin-row';
     row.dataset.idx = idx;
     
+    // Create select options with sorted teams
+    const homeOptionsHTML = TEAMS_LIST.map(teamName => `
+      <option value="${teamName}" ${teamName === match.homeTeam.name ? 'selected' : ''}>${teamName}</option>
+    `).join('');
+
+    const awayOptionsHTML = TEAMS_LIST.map(teamName => `
+      <option value="${teamName}" ${teamName === match.awayTeam.name ? 'selected' : ''}>${teamName}</option>
+    `).join('');
+    
     row.innerHTML = `
       <div class="admin-row-id">${match.matchId}</div>
       <div>
-        <input type="text" class="admin-home-name" value="${match.homeTeam.name}">
+        <select class="admin-home-select">
+          ${homeOptionsHTML}
+        </select>
       </div>
       <div>
-        <input type="text" class="admin-away-name" value="${match.awayTeam.name}">
+        <select class="admin-away-select">
+          ${awayOptionsHTML}
+        </select>
       </div>
       <div>
         <input type="number" class="admin-pct-home" min="0" max="100" value="${match.playPercentages.home}">
@@ -433,8 +457,8 @@ async function saveAdminData() {
     
     rows.forEach(row => {
       const idx = parseInt(row.dataset.idx);
-      const homeName = row.querySelector('.admin-home-name').value;
-      const awayName = row.querySelector('.admin-away-name').value;
+      const homeName = row.querySelector('.admin-home-select').value;
+      const awayName = row.querySelector('.admin-away-select').value;
       const pctHome = parseInt(row.querySelector('.admin-pct-home').value) || 0;
       const pctDraw = parseInt(row.querySelector('.admin-pct-draw').value) || 0;
       const pctAway = parseInt(row.querySelector('.admin-pct-away').value) || 0;
@@ -502,11 +526,11 @@ function showToast() {
 
 function openAdminModal() {
   renderAdminPanel();
-  adminModalEl.classList.add('show');
+  adminModalEl.classList.add('active');
 }
 
 function closeAdminModal() {
-  adminModalEl.classList.remove('show');
+  adminModalEl.classList.remove('active');
 }
 
 // --- HIDDEN ADMIN CHECK ROUTINE ---
