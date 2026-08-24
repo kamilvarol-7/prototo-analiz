@@ -5,15 +5,30 @@ let appState = {
   isDemo: true
 };
 
-// Available teams for select dropdown in admin panel
+// Comprehensive list of Turkish and European teams for autocomplete suggestions
 const TEAMS_LIST = [
+  // Trendyol Süper Lig & Major Historical Turkish Teams
   "Galatasaray", "Fenerbahçe", "Beşiktaş", "Trabzonspor", "Başakşehir", 
   "Eyüpspor", "Çaykur Rizespor", "Samsunspor", "Antalyaspor", "Konyaspor",
   "Göztepe", "Alanyaspor", "Kasımpaşa", "Bodrum FK", "Gaziantep FK", "Sivasspor", 
   "Kayserispor", "Hatayspor", "Adana Demirspor", "Fatih Karagümrük", "Pendikspor", 
+  "İstanbulspor", "Amed SFK", "Iğdır FK", "Esenler Erokspor", "Ankaragücü",
+  "Gençlerbirliği", "Kocaelispor", "Sakaryaspor", "Giresunspor", "Altay",
+  "Erzurumspor", "Manisa FK", "Boluspor", "Bandırmaspor", "Çorum FK", "Ümraniyespor",
+  "Adanaspor", "Şanlıurfaspor", "Yeni Malatyaspor",
+  // Premier League
   "Arsenal", "Manchester City", "Chelsea", "Aston Villa", "Liverpool", "Manchester United",
-  "Real Madrid", "Atletico Madrid", "Barcelona", "Real Sociedad", "Inter", 
-  "Juventus", "Milan", "Napoli", "Bayern Munich", "Borussia Dortmund", "PSG"
+  "Tottenham", "Newcastle", "West Ham", "Brighton", "Wolverhampton", "Everton",
+  "Leicester City", "Southampton", "Crystal Palace", "Fulham", "Bournemouth",
+  // La Liga
+  "Real Madrid", "Atletico Madrid", "Barcelona", "Real Sociedad", "Sevilla", "Villarreal",
+  "Athletic Bilbao", "Real Betis", "Valencia", "Girona", "Celta Vigo",
+  // Serie A
+  "Inter", "Juventus", "Milan", "Napoli", "Roma", "Lazio", "Atalanta", "Fiorentina", "Bologna",
+  // Bundesliga
+  "Bayern Munich", "Borussia Dortmund", "Bayer Leverkusen", "RB Leipzig", "Eintracht Frankfurt", "Stuttgart",
+  // Others
+  "PSG", "Marseille", "Monaco", "Lyon", "Lille", "Ajax", "PSV", "Feyenoord", "Benfica", "Porto", "Sporting CP"
 ].sort();
 
 // Cache DOM elements
@@ -74,6 +89,14 @@ function getTeamBadgeHTML(team, size) {
 
 // --- APP INITIALIZATION ---
 async function init() {
+  // Inject Autocomplete Datalist to document body dynamically
+  if (!document.getElementById('teams-datalist')) {
+    const datalist = document.createElement('datalist');
+    datalist.id = 'teams-datalist';
+    datalist.innerHTML = TEAMS_LIST.map(team => `<option value="${team}"></option>`).join('');
+    document.body.appendChild(datalist);
+  }
+
   try {
     const response = await fetch('/api/matches');
     const data = await response.json();
@@ -409,26 +432,13 @@ function renderAdminPanel() {
     row.className = 'admin-row';
     row.dataset.idx = idx;
     
-    // Create select options with sorted teams
-    const homeOptionsHTML = TEAMS_LIST.map(teamName => `
-      <option value="${teamName}" ${teamName === match.homeTeam.name ? 'selected' : ''}>${teamName}</option>
-    `).join('');
-
-    const awayOptionsHTML = TEAMS_LIST.map(teamName => `
-      <option value="${teamName}" ${teamName === match.awayTeam.name ? 'selected' : ''}>${teamName}</option>
-    `).join('');
-    
     row.innerHTML = `
       <div class="admin-row-id">${match.matchId}</div>
       <div>
-        <select class="admin-home-select">
-          ${homeOptionsHTML}
-        </select>
+        <input type="text" class="admin-home-name" list="teams-datalist" value="${match.homeTeam.name}">
       </div>
       <div>
-        <select class="admin-away-select">
-          ${awayOptionsHTML}
-        </select>
+        <input type="text" class="admin-away-name" list="teams-datalist" value="${match.awayTeam.name}">
       </div>
       <div>
         <input type="number" class="admin-pct-home" min="0" max="100" value="${match.playPercentages.home}">
@@ -457,8 +467,8 @@ async function saveAdminData() {
     
     rows.forEach(row => {
       const idx = parseInt(row.dataset.idx);
-      const homeName = row.querySelector('.admin-home-select').value;
-      const awayName = row.querySelector('.admin-away-select').value;
+      const homeName = row.querySelector('.admin-home-name').value;
+      const awayName = row.querySelector('.admin-away-name').value;
       const pctHome = parseInt(row.querySelector('.admin-pct-home').value) || 0;
       const pctDraw = parseInt(row.querySelector('.admin-pct-draw').value) || 0;
       const pctAway = parseInt(row.querySelector('.admin-pct-away').value) || 0;
