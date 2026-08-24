@@ -1,9 +1,21 @@
 {
   "cleanUrls": true,
   "builds": [
-    { "src": "api/**/*.js", "use": "@vercel/node" },
-    { "src": "*.html", "use": "@vercel/static" },
-    { "src": "*.css", "use": "@vercel/static" },
-    { "src": "*.js", "use": "@vercel/static" }
+    { "src": "api/matches.js", "use": "@vercel/node" },
+    { "src": "api/sync.js", "use": "@vercel/node" },
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "styles.css", "use": "@vercel/static" },
+    { "src": "app.js", "use": "@vercel/static" },
+    { "src": "data.js", "use": "@vercel/static" },
+    { "src": "poisson.js", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/matches", "dest": "api/matches.js" },
+    { "src": "/api/sync", "dest": "api/sync.js" },
+    { "src": "/styles.css", "dest": "styles.css" },
+    { "src": "/app.js", "dest": "app.js" },
+    { "src": "/data.js", "dest": "data.js" },
+    { "src": "/poisson.js", "dest": "poisson.js" },
+    { "src": "/(.*)", "dest": "index.html" }
   ]
 }
