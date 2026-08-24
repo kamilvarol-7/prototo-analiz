@@ -1,5 +1,3 @@
-const admin = require('firebase-admin');
-
 let db = null;
 
 function getFirestoreDb() {
@@ -13,6 +11,9 @@ function getFirestoreDb() {
     console.warn("Firebase Environment Variables are missing. App will fall back to local mock data.");
     return null;
   }
+
+  // LAZY LOAD: Load firebase-admin only if credentials are set, preventing startup crashes in demo mode.
+  const admin = require('firebase-admin');
 
   // Replace escaped newline characters from Vercel dashboard environment inputs
   privateKey = privateKey.replace(/\\n/g, '\n');
