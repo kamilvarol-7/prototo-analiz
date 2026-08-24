@@ -500,6 +500,15 @@ function showToast() {
   }, 3000);
 }
 
+function openAdminModal() {
+  renderAdminPanel();
+  adminModalEl.classList.add('show');
+}
+
+function closeAdminModal() {
+  adminModalEl.classList.remove('show');
+}
+
 // --- HIDDEN ADMIN CHECK ROUTINE ---
 function checkAdminAccess() {
   const urlParams = new URLSearchParams(window.location.search);
