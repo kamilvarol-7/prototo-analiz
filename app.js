@@ -1,9 +1,6 @@
-import { INITIAL_MATCHES } from './data.js';
-import { calculateMatchPredictions } from './poisson.js';
-
 // --- STATE MANAGEMENT ---
 let appState = {
-  matches: [...INITIAL_MATCHES],
+  matches: [],
   selectedMatchId: "1"
 };
 
@@ -64,17 +61,19 @@ function getTeamBadgeHTML(team, size) {
 }
 
 // --- APP INITIALIZATION ---
-function init() {
-  // Pre-calculate predictions for all matches
-  appState.matches = appState.matches.map(match => {
-    const predictions = calculateMatchPredictions(
-      match.statistics.goalsScoredAvg[0],
-      match.statistics.goalsConcededAvg[0],
-      match.statistics.goalsScoredAvg[1],
-      match.statistics.goalsConcededAvg[1]
-    );
-    return { ...match, ...predictions };
-  });
+async function init() {
+  try {
+    const response = await fetch('/api/matches');
+    const data = await response.json();
+    appState.matches = data;
+    
+    // Default select first match in array
+    if (appState.matches.length > 0) {
+      appState.selectedMatchId = appState.matches[0].matchId;
+    }
+  } catch (error) {
+    console.error("Error loading matches bulletin from backend:", error);
+  }
 
   renderMatchList();
   renderMatchDetails();
@@ -127,7 +126,7 @@ function renderMatchDetails() {
   if (!match) {
     mainContentEl.innerHTML = `
       <div class="empty-state">
-        <h3>Maç bulunamadı.</h3>
+        <h3>Bülten verisi yüklenemedi.</h3>
       </div>
     `;
     return;
@@ -173,12 +172,12 @@ function renderMatchDetails() {
             Olası Skor Tahminleri
           </h3>
           <div class="score-predictions-list" style="margin-top: 16px;">
-            ${match.scorePredictions.map(p => `
+            ${match.scorePredictions ? match.scorePredictions.map(p => `
               <div class="prediction-row">
                 <span class="prediction-score">${p.score}</span>
                 <span class="prediction-prob">%${p.probability}</span>
               </div>
-            `).join('')}
+            `).join('') : '<div style="color:var(--text-muted); font-size:0.85rem;">Hesaplanamadı.</div>'}
           </div>
         </div>
 
@@ -270,7 +269,7 @@ function renderMatchDetails() {
             Aralarındaki Son 3 Maç
           </h3>
           <div class="h2h-list">
-            ${match.h2hMatches.length > 0 ? match.h2hMatches.map(game => `
+            ${match.h2hMatches && match.h2hMatches.length > 0 ? match.h2hMatches.map(game => `
               <div class="h2h-item">
                 <span class="h2h-teams">${match.homeTeam.name} - ${match.awayTeam.name}</span>
                 <span class="h2h-score">${game.homeScore} - ${game.awayScore}</span>
@@ -392,58 +391,75 @@ function renderAdminPanel() {
   });
 }
 
-function saveAdminData() {
-  const rows = adminRowsContainerEl.querySelectorAll('.admin-row');
-  
-  rows.forEach(row => {
-    const idx = parseInt(row.dataset.idx);
-    const homeName = row.querySelector('.admin-home-name').value;
-    const awayName = row.querySelector('.admin-away-name').value;
-    const pctHome = parseInt(row.querySelector('.admin-pct-home').value) || 0;
-    const pctDraw = parseInt(row.querySelector('.admin-pct-draw').value) || 0;
-    const pctAway = parseInt(row.querySelector('.admin-pct-away').value) || 0;
+async function saveAdminData() {
+  const saveBtn = document.getElementById('save-admin-btn');
+  const originalText = saveBtn.innerText;
+  saveBtn.innerText = "Senkronize Ediliyor...";
+  saveBtn.disabled = true;
+
+  try {
+    const rows = adminRowsContainerEl.querySelectorAll('.admin-row');
+    const payloadMatches = [];
     
-    const match = appState.matches[idx];
+    rows.forEach(row => {
+      const idx = parseInt(row.dataset.idx);
+      const homeName = row.querySelector('.admin-home-name').value;
+      const awayName = row.querySelector('.admin-away-name').value;
+      const pctHome = parseInt(row.querySelector('.admin-pct-home').value) || 0;
+      const pctDraw = parseInt(row.querySelector('.admin-pct-draw').value) || 0;
+      const pctAway = parseInt(row.querySelector('.admin-pct-away').value) || 0;
+      
+      const match = appState.matches[idx];
+      
+      payloadMatches.push({
+        matchId: match.matchId,
+        league: match.league,
+        homeTeam: {
+          name: homeName,
+          logo: match.homeTeam.logo,
+          code: match.homeTeam.code
+        },
+        awayTeam: {
+          name: awayName,
+          logo: match.awayTeam.logo,
+          code: match.awayTeam.code
+        },
+        playPercentages: {
+          home: pctHome,
+          draw: pctDraw,
+          away: pctAway
+        },
+        odds: match.odds,
+        h2hMatches: match.h2hMatches
+      });
+    });
+
+    // POST updated teams to serverless sync API
+    const syncResponse = await fetch('/api/sync', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ matches: payloadMatches })
+    });
     
-    // Check if team names changed, if so generate new codes
-    if (match.homeTeam.name !== homeName) {
-      match.homeTeam.name = homeName;
-      match.homeTeam.code = homeName.slice(0, 3).toUpperCase();
-      // Generate some dummy/believable new stats for recalculated predictions
-      match.statistics.goalsScoredAvg[0] = Math.round((Math.random() * 1.5 + 1) * 10) / 10;
-      match.statistics.goalsConcededAvg[0] = Math.round((Math.random() * 1.5 + 0.5) * 10) / 10;
+    const syncData = await syncResponse.json();
+    if (syncData.success && syncData.matches) {
+      appState.matches = syncData.matches;
+      renderMatchList();
+      renderMatchDetails();
+      showToast();
+      closeAdminModal();
+    } else {
+      alert("Hata: " + (syncData.error || "İstatistikler senkronize edilemedi."));
     }
-    
-    if (match.awayTeam.name !== awayName) {
-      match.awayTeam.name = awayName;
-      match.awayTeam.code = awayName.slice(0, 3).toUpperCase();
-      match.statistics.goalsScoredAvg[1] = Math.round((Math.random() * 1.5 + 0.8) * 10) / 10;
-      match.statistics.goalsConcededAvg[1] = Math.round((Math.random() * 1.5 + 0.6) * 10) / 10;
-    }
-
-    // Set new play percentages
-    match.playPercentages = {
-      home: pctHome,
-      draw: pctDraw,
-      away: pctAway
-    };
-
-    // Recalculate Poisson predictions
-    const predictions = calculateMatchPredictions(
-      match.statistics.goalsScoredAvg[0],
-      match.statistics.goalsConcededAvg[0],
-      match.statistics.goalsScoredAvg[1],
-      match.statistics.goalsConcededAvg[1]
-    );
-
-    appState.matches[idx] = { ...match, ...predictions };
-  });
-
-  // Save successful
-  renderMatchList();
-  renderMatchDetails();
-  showToast();
-  closeAdminModal();
+  } catch (error) {
+    console.error("Error updating bulletin:", error);
+    alert("Bağlantı hatası: Sunucuya ulaşılamadı.");
+  } finally {
+    saveBtn.innerText = originalText;
+    saveBtn.disabled = false;
+  }
 }
 
 function showToast() {
@@ -453,15 +469,6 @@ function showToast() {
   }, 3000);
 }
 
-function openAdminModal() {
-  renderAdminPanel();
-  adminModalEl.classList.add('active');
-}
-
-function closeAdminModal() {
-  adminModalEl.classList.remove('active');
-}
-
 // --- HIDDEN ADMIN CHECK ROUTINE ---
 function checkAdminAccess() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -469,8 +476,7 @@ function checkAdminAccess() {
   
   if (isAdmin) {
     const sidebarHeader = document.querySelector('.sidebar-header');
-    if (sidebarHeader) {
-      // Create and inject a beautiful settings cog icon
+    if (sidebarHeader && !document.getElementById('open-admin-btn')) {
       const gearBtn = document.createElement('button');
       gearBtn.id = 'open-admin-btn';
       gearBtn.className = 'admin-toggle-btn';
@@ -483,7 +489,6 @@ function checkAdminAccess() {
       gearBtn.style.height = '32px';
       gearBtn.title = 'Yönetim Paneli';
       
-      // Inject SVG Gear icon
       gearBtn.innerHTML = `
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="color:var(--primary)">
           <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.17.311c.58.227.874.872.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.17a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.17-.311a1.464 1.464 0 0 1-.872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.17a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.86z"/>
@@ -502,7 +507,6 @@ function setupEventListeners() {
   cancelAdminBtn.addEventListener('click', closeAdminModal);
   saveAdminBtn.addEventListener('click', saveAdminData);
   
-  // Close modal when clicking outside box
   adminModalEl.addEventListener('click', (e) => {
     if (e.target === adminModalEl) closeAdminModal();
   });
