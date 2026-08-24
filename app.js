@@ -13,7 +13,6 @@ const mainContentEl = document.getElementById('main-content');
 const adminModalEl = document.getElementById('admin-modal');
 const adminRowsContainerEl = document.getElementById('admin-rows-container');
 
-const openAdminBtn = document.getElementById('open-admin-btn');
 const closeAdminBtn = document.getElementById('close-admin-btn');
 const cancelAdminBtn = document.getElementById('cancel-admin-btn');
 const saveAdminBtn = document.getElementById('save-admin-btn');
@@ -453,9 +452,24 @@ function showToast() {
   }, 3000);
 }
 
+function openAdminModal() {
+  renderAdminPanel();
+  adminModalEl.classList.add('active');
+}
+
+function closeAdminModal() {
+  adminModalEl.classList.remove('active');
+}
+
 // --- EVENT LISTENERS ---
 function setupEventListeners() {
-  openAdminBtn.addEventListener('click', openAdminModal);
+  // Select the brand element and make it function as the admin panel toggle
+  const brandEl = document.querySelector('.brand');
+  if (brandEl) {
+    brandEl.style.cursor = 'pointer';
+    brandEl.addEventListener('click', openAdminModal);
+  }
+  
   closeAdminBtn.addEventListener('click', closeAdminModal);
   cancelAdminBtn.addEventListener('click', closeAdminModal);
   saveAdminBtn.addEventListener('click', saveAdminData);

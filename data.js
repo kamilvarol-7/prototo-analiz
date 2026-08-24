@@ -7,8 +7,8 @@ export const INITIAL_MATCHES = [
   {
     matchId: "1",
     league: "Süper Lig",
-    homeTeam: { name: "Galatasaray", logo: "https://media.api-sports.io/football/teams/564.png", code: "GS" },
-    awayTeam: { name: "Fenerbahçe", logo: "https://media.api-sports.io/football/teams/563.png", code: "FB" },
+    homeTeam: { name: "Galatasaray", logo: "https://images.fotmob.com/image_resources/logo/team/8670.png", code: "GS" },
+    awayTeam: { name: "Fenerbahçe", logo: "https://images.fotmob.com/image_resources/logo/team/8675.png", code: "FB" },
     statistics: {
       goalsScoredAvg: [2.4, 2.1],
       goalsConcededAvg: [0.9, 0.8],
@@ -30,8 +30,8 @@ export const INITIAL_MATCHES = [
   {
     matchId: "2",
     league: "Süper Lig",
-    homeTeam: { name: "Çaykur Rizespor", logo: "https://media.api-sports.io/football/teams/3579.png", code: "RIZ" },
-    awayTeam: { name: "Samsunspor", logo: "https://media.api-sports.io/football/teams/3574.png", code: "SAM" },
+    homeTeam: { name: "Çaykur Rizespor", logo: "https://images.fotmob.com/image_resources/logo/team/10148.png", code: "RIZ" },
+    awayTeam: { name: "Samsunspor", logo: "https://images.fotmob.com/image_resources/logo/team/8657.png", code: "SAM" },
     statistics: {
       goalsScoredAvg: [1.2, 1.4],
       goalsConcededAvg: [1.5, 1.1],
@@ -53,8 +53,8 @@ export const INITIAL_MATCHES = [
   {
     matchId: "3",
     league: "Süper Lig",
-    homeTeam: { name: "Beşiktaş", logo: "https://media.api-sports.io/football/teams/565.png", code: "BJK" },
-    awayTeam: { name: "Trabzonspor", logo: "https://media.api-sports.io/football/teams/558.png", code: "TS" },
+    homeTeam: { name: "Beşiktaş", logo: "https://images.fotmob.com/image_resources/logo/team/8658.png", code: "BJK" },
+    awayTeam: { name: "Trabzonspor", logo: "https://images.fotmob.com/image_resources/logo/team/8655.png", code: "TS" },
     statistics: {
       goalsScoredAvg: [1.8, 1.6],
       goalsConcededAvg: [1.2, 1.3],
@@ -76,8 +76,8 @@ export const INITIAL_MATCHES = [
   {
     matchId: "4",
     league: "Süper Lig",
-    homeTeam: { name: "Başakşehir", logo: "https://media.api-sports.io/football/teams/998.png", code: "IBFK" },
-    awayTeam: { name: "Eyüpspor", logo: "https://media.api-sports.io/football/teams/1025.png", code: "EYUP" },
+    homeTeam: { name: "Başakşehir", logo: "https://images.fotmob.com/image_resources/logo/team/10149.png", code: "IBFK" },
+    awayTeam: { name: "Eyüpspor", logo: "https://images.fotmob.com/image_resources/logo/team/516900.png", code: "EYUP" },
     statistics: {
       goalsScoredAvg: [1.4, 1.3],
       goalsConcededAvg: [1.2, 1.4],
@@ -97,8 +97,8 @@ export const INITIAL_MATCHES = [
   {
     matchId: "5",
     league: "Süper Lig",
-    homeTeam: { name: "Antalyaspor", logo: "https://media.api-sports.io/football/teams/1010.png", code: "ANT" },
-    awayTeam: { name: "Konyaspor", logo: "https://media.api-sports.io/football/teams/1012.png", code: "KON" },
+    homeTeam: { name: "Antalyaspor", logo: "https://images.fotmob.com/image_resources/logo/team/8656.png", code: "ANT" },
+    awayTeam: { name: "Konyaspor", logo: "https://images.fotmob.com/image_resources/logo/team/8654.png", code: "KON" },
     statistics: {
       goalsScoredAvg: [1.1, 0.9],
       goalsConcededAvg: [1.3, 1.2],
@@ -120,8 +120,8 @@ export const INITIAL_MATCHES = [
   {
     matchId: "6",
     league: "Süper Lig",
-    homeTeam: { name: "Göztepe", logo: "https://media.api-sports.io/football/teams/1004.png", code: "GOZ" },
-    awayTeam: { name: "Alanyaspor", logo: "https://media.api-sports.io/football/teams/1015.png", code: "ALA" },
+    homeTeam: { name: "Göztepe", logo: "https://images.fotmob.com/image_resources/logo/team/8653.png", code: "GOZ" },
+    awayTeam: { name: "Alanyaspor", logo: "https://images.fotmob.com/image_resources/logo/team/158572.png", code: "ALA" },
     statistics: {
       goalsScoredAvg: [1.5, 1.2],
       goalsConcededAvg: [1.1, 1.4],
@@ -142,8 +142,8 @@ export const INITIAL_MATCHES = [
   {
     matchId: "7",
     league: "Süper Lig",
-    homeTeam: { name: "Kasımpaşa", logo: "https://media.api-sports.io/football/teams/1002.png", code: "KAS" },
-    awayTeam: { name: "Bodrum FK", logo: "https://media.api-sports.io/football/teams/18987.png", code: "BOD" },
+    homeTeam: { name: "Kasımpaşa", logo: "https://images.fotmob.com/image_resources/logo/team/10214.png", code: "KAS" },
+    awayTeam: { name: "Bodrum FK", logo: "https://images.fotmob.com/image_resources/logo/team/938743.png", code: "BOD" },
     statistics: {
       goalsScoredAvg: [1.6, 1.1],
       goalsConcededAvg: [1.7, 1.3],
@@ -161,8 +161,8 @@ export const INITIAL_MATCHES = [
   {
     matchId: "8",
     league: "Süper Lig",
-    homeTeam: { name: "Gaziantep FK", logo: "https://media.api-sports.io/football/teams/1019.png", code: "GFK" },
-    awayTeam: { name: "Sivasspor", logo: "https://media.api-sports.io/football/teams/1018.png", code: "SIV" },
+    homeTeam: { name: "Gaziantep FK", logo: "https://images.fotmob.com/image_resources/logo/team/7261.png", code: "GFK" },
+    awayTeam: { name: "Sivasspor", logo: "https://images.fotmob.com/image_resources/logo/team/8652.png", code: "SIV" },
     statistics: {
       goalsScoredAvg: [1.2, 1.3],
       goalsConcededAvg: [1.5, 1.4],
@@ -184,8 +184,8 @@ export const INITIAL_MATCHES = [
   {
     matchId: "9",
     league: "Premier League",
-    homeTeam: { name: "Arsenal", logo: "https://media.api-sports.io/football/teams/42.png", code: "ARS" },
-    awayTeam: { name: "Manchester City", logo: "https://media.api-sports.io/football/teams/50.png", code: "MCI" },
+    homeTeam: { name: "Arsenal", logo: "https://images.fotmob.com/image_resources/logo/team/9825.png", code: "ARS" },
+    awayTeam: { name: "Manchester City", logo: "https://images.fotmob.com/image_resources/logo/team/8457.png", code: "MCI" },
     statistics: {
       goalsScoredAvg: [2.3, 2.6],
       goalsConcededAvg: [0.7, 0.9],
@@ -207,8 +207,8 @@ export const INITIAL_MATCHES = [
   {
     matchId: "10",
     league: "Premier League",
-    homeTeam: { name: "Chelsea", logo: "https://media.api-sports.io/football/teams/49.png", code: "CHE" },
-    awayTeam: { name: "Aston Villa", logo: "https://media.api-sports.io/football/teams/66.png", code: "AVL" },
+    homeTeam: { name: "Chelsea", logo: "https://images.fotmob.com/image_resources/logo/team/8455.png", code: "CHE" },
+    awayTeam: { name: "Aston Villa", logo: "https://images.fotmob.com/image_resources/logo/team/10252.png", code: "AVL" },
     statistics: {
       goalsScoredAvg: [2.0, 1.9],
       goalsConcededAvg: [1.6, 1.5],
@@ -230,8 +230,8 @@ export const INITIAL_MATCHES = [
   {
     matchId: "11",
     league: "La Liga",
-    homeTeam: { name: "Real Madrid", logo: "https://media.api-sports.io/football/teams/541.png", code: "RMA" },
-    awayTeam: { name: "Atletico Madrid", logo: "https://media.api-sports.io/football/teams/530.png", code: "ATM" },
+    homeTeam: { name: "Real Madrid", logo: "https://images.fotmob.com/image_resources/logo/team/8633.png", code: "RMA" },
+    awayTeam: { name: "Atletico Madrid", logo: "https://images.fotmob.com/image_resources/logo/team/9906.png", code: "ATM" },
     statistics: {
       goalsScoredAvg: [2.4, 1.8],
       goalsConcededAvg: [0.7, 1.1],
@@ -253,8 +253,8 @@ export const INITIAL_MATCHES = [
   {
     matchId: "12",
     league: "La Liga",
-    homeTeam: { name: "Barcelona", logo: "https://media.api-sports.io/football/teams/529.png", code: "BAR" },
-    awayTeam: { name: "Real Sociedad", logo: "https://media.api-sports.io/football/teams/548.png", code: "RSO" },
+    homeTeam: { name: "Barcelona", logo: "https://images.fotmob.com/image_resources/logo/team/8634.png", code: "BAR" },
+    awayTeam: { name: "Real Sociedad", logo: "https://images.fotmob.com/image_resources/logo/team/8560.png", code: "RSO" },
     statistics: {
       goalsScoredAvg: [2.1, 1.3],
       goalsConcededAvg: [1.1, 1.0],
@@ -276,8 +276,8 @@ export const INITIAL_MATCHES = [
   {
     matchId: "13",
     league: "Serie A",
-    homeTeam: { name: "Inter", logo: "https://media.api-sports.io/football/teams/505.png", code: "INT" },
-    awayTeam: { name: "Juventus", logo: "https://media.api-sports.io/football/teams/496.png", code: "JUV" },
+    homeTeam: { name: "Inter", logo: "https://images.fotmob.com/image_resources/logo/team/8636.png", code: "INT" },
+    awayTeam: { name: "Juventus", logo: "https://images.fotmob.com/image_resources/logo/team/9885.png", code: "JUV" },
     statistics: {
       goalsScoredAvg: [2.3, 1.4],
       goalsConcededAvg: [0.6, 0.8],
@@ -299,8 +299,8 @@ export const INITIAL_MATCHES = [
   {
     matchId: "14",
     league: "Serie A",
-    homeTeam: { name: "Milan", logo: "https://media.api-sports.io/football/teams/489.png", code: "MIL" },
-    awayTeam: { name: "Napoli", logo: "https://media.api-sports.io/football/teams/492.png", code: "NAP" },
+    homeTeam: { name: "Milan", logo: "https://images.fotmob.com/image_resources/logo/team/8564.png", code: "MIL" },
+    awayTeam: { name: "Napoli", logo: "https://images.fotmob.com/image_resources/logo/team/9875.png", code: "NAP" },
     statistics: {
       goalsScoredAvg: [1.9, 1.4],
       goalsConcededAvg: [1.3, 1.3],
@@ -322,8 +322,8 @@ export const INITIAL_MATCHES = [
   {
     matchId: "15",
     league: "Süper Lig",
-    homeTeam: { name: "Fatih Karagümrük", logo: "https://media.api-sports.io/football/teams/3576.png", code: "FKG" },
-    awayTeam: { name: "Pendikspor", logo: "https://media.api-sports.io/football/teams/13398.png", code: "PEND" },
+    homeTeam: { name: "Fatih Karagümrük", logo: "https://images.fotmob.com/image_resources/logo/team/516901.png", code: "FKG" },
+    awayTeam: { name: "Pendikspor", logo: "https://images.fotmob.com/image_resources/logo/team/479904.png", code: "PEND" },
     statistics: {
       goalsScoredAvg: [1.2, 1.1],
       goalsConcededAvg: [1.4, 1.8],
