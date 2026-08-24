@@ -170,6 +170,16 @@ async function getTeamStats(teamId, leagueId, headers, baseUrl) {
         goalsAgainstAway: stats.goals.against.average.away || "1.3",
         playedHome: (stats.fixtures && stats.fixtures.played && stats.fixtures.played.home) || 0,
         playedAway: (stats.fixtures && stats.fixtures.played && stats.fixtures.played.away) || 0,
+        cleanSheetsHome: (stats.clean_sheet && stats.clean_sheet.home) || 0,
+        cleanSheetsAway: (stats.clean_sheet && stats.clean_sheet.away) || 0,
+        failedToScoreHome: (stats.failed_to_score && stats.failed_to_score.home) || 0,
+        failedToScoreAway: (stats.failed_to_score && stats.failed_to_score.away) || 0,
+        winsHome: (stats.fixtures && stats.fixtures.wins && stats.fixtures.wins.home) || 0,
+        winsAway: (stats.fixtures && stats.fixtures.wins && stats.fixtures.wins.away) || 0,
+        drawsHome: (stats.fixtures && stats.fixtures.draws && stats.fixtures.draws.home) || 0,
+        drawsAway: (stats.fixtures && stats.fixtures.draws && stats.fixtures.draws.away) || 0,
+        lossesHome: (stats.fixtures && stats.fixtures.loses && stats.fixtures.loses.home) || 0,
+        lossesAway: (stats.fixtures && stats.fixtures.loses && stats.fixtures.loses.away) || 0,
         form: stats.form || ""
       };
     }
@@ -380,6 +390,16 @@ module.exports = async (req, res) => {
 
       let homePlayed = 0;
       let awayPlayed = 0;
+      let homeCleanSheets = 0;
+      let awayCleanSheets = 0;
+      let homeFailedToScore = 0;
+      let awayFailedToScore = 0;
+      let homeWinsCount = 0;
+      let awayWinsCount = 0;
+      let homeDrawsCount = 0;
+      let awayDrawsCount = 0;
+      let homeLossesCount = 0;
+      let awayLossesCount = 0;
       let homeMult = 1.0;
       let awayMult = 1.0;
 
@@ -389,6 +409,11 @@ module.exports = async (req, res) => {
 
         if (homeStats) {
           homePlayed = parseInt(homeStats.playedHome) || 0;
+          homeCleanSheets = parseInt(homeStats.cleanSheetsHome) || 0;
+          homeFailedToScore = parseInt(homeStats.failedToScoreHome) || 0;
+          homeWinsCount = parseInt(homeStats.winsHome) || 0;
+          homeDrawsCount = parseInt(homeStats.drawsHome) || 0;
+          homeLossesCount = parseInt(homeStats.lossesHome) || 0;
           homeMult = getFormMultiplier(homeStats.form);
           rawHomeScored = parseFloat(homeStats.goalsForHome) || 0.0;
           rawHomeConceded = parseFloat(homeStats.goalsAgainstHome) || 0.0;
@@ -396,6 +421,11 @@ module.exports = async (req, res) => {
         
         if (awayStats) {
           awayPlayed = parseInt(awayStats.playedAway) || 0;
+          awayCleanSheets = parseInt(awayStats.cleanSheetsAway) || 0;
+          awayFailedToScore = parseInt(awayStats.failedToScoreAway) || 0;
+          awayWinsCount = parseInt(awayStats.winsAway) || 0;
+          awayDrawsCount = parseInt(awayStats.drawsAway) || 0;
+          awayLossesCount = parseInt(awayStats.lossesAway) || 0;
           awayMult = getFormMultiplier(awayStats.form);
           rawAwayScored = parseFloat(awayStats.goalsForAway) || 0.0;
           rawAwayConceded = parseFloat(awayStats.goalsAgainstAway) || 0.0;
@@ -442,10 +472,26 @@ module.exports = async (req, res) => {
       const statistics = {
         goalsScoredAvg: [parseFloat(rawHomeScored.toFixed(2)), parseFloat(rawAwayScored.toFixed(2))],
         goalsConcededAvg: [parseFloat(rawHomeConceded.toFixed(2)), parseFloat(rawAwayConceded.toFixed(2))],
-        shotsAvg: [parseFloat((rawHomeScored * 7 + 3).toFixed(1)), parseFloat((rawAwayScored * 6 + 4).toFixed(1))],
-        shotsConcededAvg: [parseFloat((rawHomeConceded * 8 + 2).toFixed(1)), parseFloat((rawAwayConceded * 7 + 3).toFixed(1))],
-        firstGoalPct: [Math.round(rawHomeScored * 30 + 20), Math.round(rawAwayScored * 25 + 25)],
-        bothTeamsToScorePct: Math.round((1 - (rawHomeConceded < 0.2 ? 0.2 : rawHomeConceded) * 0.1) * 60)
+        cleanSheetPct: [
+          homePlayed > 0 ? Math.round((homeCleanSheets / homePlayed) * 100) : 0,
+          awayPlayed > 0 ? Math.round((awayCleanSheets / awayPlayed) * 100) : 0
+        ],
+        failedToScorePct: [
+          homePlayed > 0 ? Math.round((homeFailedToScore / homePlayed) * 100) : 0,
+          awayPlayed > 0 ? Math.round((awayFailedToScore / awayPlayed) * 100) : 0
+        ],
+        winPct: [
+          homePlayed > 0 ? Math.round((homeWinsCount / homePlayed) * 100) : 0,
+          awayPlayed > 0 ? Math.round((awayWinsCount / awayPlayed) * 100) : 0
+        ],
+        drawPct: [
+          homePlayed > 0 ? Math.round((homeDrawsCount / homePlayed) * 100) : 0,
+          awayPlayed > 0 ? Math.round((awayDrawsCount / awayPlayed) * 100) : 0
+        ],
+        lossPct: [
+          homePlayed > 0 ? Math.round((homeLossesCount / homePlayed) * 100) : 0,
+          awayPlayed > 0 ? Math.round((awayLossesCount / awayPlayed) * 100) : 0
+        ]
       };
 
       // xG approximations
