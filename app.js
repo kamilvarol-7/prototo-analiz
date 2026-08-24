@@ -5,6 +5,24 @@ let appState = {
   isDemo: true
 };
 
+// Available leagues for selection in admin panel
+const LEAGUES_LIST = [
+  "Süper Lig",
+  "TFF 1. Lig",
+  "Premier League",
+  "La Liga",
+  "Serie A",
+  "Bundesliga",
+  "Ligue 1",
+  "Eredivisie (Hollanda)",
+  "Pro League (Belçika)",
+  "Primeira Liga (Portekiz)",
+  "Super League (Yunanistan)",
+  "Premiership (İskoçya)",
+  "Ekstraklasa (Polonya)",
+  "Premier League (Rusya)"
+];
+
 // Comprehensive list of Turkish and European teams for autocomplete suggestions
 const TEAMS_LIST = [
   // Trendyol Süper Lig & Major Historical Turkish Teams
@@ -27,8 +45,20 @@ const TEAMS_LIST = [
   "Inter", "Juventus", "Milan", "Napoli", "Roma", "Lazio", "Atalanta", "Fiorentina", "Bologna",
   // Bundesliga
   "Bayern Munich", "Borussia Dortmund", "Bayer Leverkusen", "RB Leipzig", "Eintracht Frankfurt", "Stuttgart",
-  // Others
-  "PSG", "Marseille", "Monaco", "Lyon", "Lille", "Ajax", "PSV", "Feyenoord", "Benfica", "Porto", "Sporting CP"
+  // Ligue 1
+  "PSG", "Marseille", "Monaco", "Lyon", "Lille", "Lens", "Rennes", "Nice",
+  // Eredivisie (Hollanda)
+  "Ajax", "PSV", "Feyenoord", "AZ Alkmaar", "FC Utrecht", "FC Twente",
+  // Pro League (Belçika)
+  "Club Brugge", "Anderlecht", "Genk", "Gent", "Antwerp", "Union SG",
+  // Primeira Liga (Portekiz)
+  "Benfica", "Porto", "Sporting CP", "Braga",
+  // Greece
+  "Olympiacos", "PAOK", "AEK Athens", "Panathinaikos",
+  // Scotland
+  "Celtic", "Rangers",
+  // Poland & Russia (Eastern Europe)
+  "Legia Warsaw", "Lech Poznan", "Rakow", "Zenit St. Petersburg", "Spartak Moscow", "CSKA Moscow"
 ].sort();
 
 // Cache DOM elements
@@ -432,8 +462,18 @@ function renderAdminPanel() {
     row.className = 'admin-row';
     row.dataset.idx = idx;
     
+    // Create league select options
+    const leagueOptionsHTML = LEAGUES_LIST.map(leagueName => `
+      <option value="${leagueName}" ${match.league === leagueName ? 'selected' : ''}>${leagueName}</option>
+    `).join('');
+    
     row.innerHTML = `
       <div class="admin-row-id">${match.matchId}</div>
+      <div>
+        <select class="admin-league-select">
+          ${leagueOptionsHTML}
+        </select>
+      </div>
       <div>
         <input type="text" class="admin-home-name" list="teams-datalist" value="${match.homeTeam.name}">
       </div>
@@ -467,6 +507,7 @@ async function saveAdminData() {
     
     rows.forEach(row => {
       const idx = parseInt(row.dataset.idx);
+      const leagueName = row.querySelector('.admin-league-select').value;
       const homeName = row.querySelector('.admin-home-name').value;
       const awayName = row.querySelector('.admin-away-name').value;
       const pctHome = parseInt(row.querySelector('.admin-pct-home').value) || 0;
@@ -477,7 +518,7 @@ async function saveAdminData() {
       
       payloadMatches.push({
         matchId: match.matchId,
-        league: match.league,
+        league: leagueName,
         homeTeam: {
           name: homeName,
           logo: match.homeTeam.logo,

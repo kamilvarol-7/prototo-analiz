@@ -2,10 +2,20 @@ const { getFirestoreDb } = require('./firebase-admin-init');
 
 // --- Helper: League Name to API-Football League ID Mapping ---
 function getLeagueId(leagueName) {
-  const name = leagueName.toLowerCase();
-  if (name.includes("premier")) return 39;
-  if (name.includes("la liga") || name.includes("laliga") || name.includes("spain")) return 140;
-  if (name.includes("serie a") || name.includes("italy")) return 135;
+  const name = leagueName.toLowerCase().trim();
+  if (name.includes("premier league") || name.includes("ingiltere") || name.includes("premier")) return 39;
+  if (name.includes("la liga") || name.includes("laliga") || name.includes("ispanya")) return 140;
+  if (name.includes("serie a") || name.includes("italya")) return 135;
+  if (name.includes("bundesliga") || name.includes("almanya")) return 78;
+  if (name.includes("ligue 1") || name.includes("fransa")) return 61;
+  if (name.includes("eredivisie") || name.includes("hollanda")) return 88;
+  if (name.includes("pro league") || name.includes("belçika") || name.includes("belcika")) return 144;
+  if (name.includes("primeira liga") || name.includes("portekiz")) return 94;
+  if (name.includes("super league") || name.includes("yunanistan")) return 197;
+  if (name.includes("premiership") || name.includes("iskoçya") || name.includes("iskocya")) return 179;
+  if (name.includes("ekstraklasa") || name.includes("polonya")) return 106;
+  if (name.includes("premier league russia") || name.includes("rusya")) return 235;
+  if (name.includes("tff 1. lig") || name.includes("tff 1.lig") || name.includes("1. lig")) return 204;
   return 203; // Default to Süper Lig (Turkey)
 }
 
@@ -98,6 +108,7 @@ function calculateMatchPredictions(homeScoredAvg, homeConcededAvg, awayScoredAvg
 
   const homeSum = homeProbabilities.reduce((a, b) => a + b, 0);
   const awaySum = awayProbabilities.reduce((a, b) => a + b, 0);
+
   for (let g = 0; g <= maxGoals; g++) {
     homeProbabilities[g] /= homeSum;
     awayProbabilities[g] /= awaySum;
