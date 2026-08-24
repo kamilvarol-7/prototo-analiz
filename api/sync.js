@@ -1,101 +1,28 @@
 const { getFirestoreDb } = require('./firebase-admin-init');
 
-// --- Helper: Static Team name to API-Football ID mapping ---
-// Bypasses search queries, saves API quota, and resolves spelling/Turkish character mismatches
-const TEAM_IDS = {
-  "galatasaray": 611,
-  "fenerbahçe": 607,
-  "fenerbahce": 607,
-  "beşiktaş": 564,
-  "besiktas": 564,
-  "trabzonspor": 549,
-  "başakşehir": 996,
-  "basaksehir": 996,
-  "eyüpspor": 3577,
-  "eyupspor": 3577,
-  "çaykur rizespor": 603,
-  "rizespor": 603,
-  "samsunspor": 3584,
-  "antalyaspor": 558,
-  "konyaspor": 560,
-  "göztepe": 601,
-  "goztepe": 601,
-  "alanyaspor": 563,
-  "kasımpaşa": 1001,
-  "kasimpasa": 1001,
-  "bodrum fk": 14093,
-  "bodrumspor": 14093,
-  "gaziantep fk": 3575,
-  "sivasspor": 559,
-  "kayserispor": 561,
-  "hatayspor": 3578,
-  "adana demirspor": 3569,
-  "fatih karagümrük": 1002,
-  "karagümrük": 1002,
-  "pendikspor": 10167,
-  "istanbulspor": 1005,
-  "ankaragücü": 562,
-  "gençlerbirliği": 602,
-  "genclerbirligi": 602,
-  "erzurumspor": 3574,
-  "erzurum bb": 3574,
-  "kocaelispor": 3580,
-  "sakaryaspor": 3583,
-  "giresunspor": 3576,
-  "altay": 3570,
-  "manisa fk": 10165,
-  "boluspor": 3573,
-  "bandırmaspor": 3572,
-  "çorum fk": 12822,
-  "ümraniyespor": 3585,
-  "adanaspor": 3568,
-  "şanlıurfaspor": 3582,
-  "yeni malatyaspor": 3581,
+// Memory cache to store team search results during execution and protect API quota limits
+const searchCache = {};
+
+// --- Helper: Clean and Sanitize Team Names for API-Football Fuzzy Search ---
+function sanitizeTeamNameForSearch(name) {
+  let clean = name.toLowerCase()
+    .replace(/ğ/g, 'g')
+    .replace(/ü/g, 'u')
+    .replace(/ş/g, 's')
+    .replace(/ı/g, 'i')
+    .replace(/ö/g, 'o')
+    .replace(/ç/g, 'c')
+    .trim();
   
-  // Premier League
-  "arsenal": 42,
-  "manchester city": 50,
-  "chelsea": 49,
-  "aston villa": 66,
-  "liverpool": 40,
-  "manchester united": 33,
-  "tottenham": 47,
-  "newcastle": 34,
-  "west ham": 48,
-  "brighton": 51,
-  
-  // La Liga
-  "real madrid": 541,
-  "barcelona": 529,
-  "atletico madrid": 530,
-  "real sociedad": 548,
-  "sevilla": 536,
-  "villarreal": 533,
-  
-  // Serie A
-  "inter": 505,
-  "juventus": 496,
-  "milan": 489,
-  "napoli": 492,
-  "roma": 497,
-  
-  // Bundesliga
-  "bayern munich": 157,
-  "borussia dortmund": 165,
-  "bayer leverkusen": 168,
-  "rb leipzig": 173,
-  
-  // Others
-  "psg": 85,
-  "ajax": 194,
-  "psv": 197,
-  "feyenoord": 198,
-  "celtic": 65,
-  "rangers": 62,
-  "benfica": 211,
-  "porto": 212,
-  "sporting cp": 228
-};
+  // Strip common abbreviations to make fuzzy matching extremely accurate
+  clean = clean.replace(/spor/g, '')
+               .replace(/\bfk\b/g, '')
+               .replace(/\bsk\b/g, '')
+               .replace(/\bbs\b/g, '')
+               .replace(/\bbb\b/g, '')
+               .trim();
+  return clean;
+}
 
 // --- Helper: League Name to API-Football League ID Mapping ---
 function getLeagueId(leagueName) {
@@ -118,31 +45,38 @@ function getLeagueId(leagueName) {
 
 // --- Helper: Search Team ID & Logo in Football API ---
 async function searchTeam(teamName, headers, baseUrl) {
-  const cleanName = teamName.toLowerCase().trim();
+  const cleanName = sanitizeTeamNameForSearch(teamName);
   
-  // Try static resolution first (highly recommended for performance and accuracy)
-  if (TEAM_IDS[cleanName]) {
-    const id = TEAM_IDS[cleanName];
-    return {
-      id: id,
-      name: teamName,
-      logo: `https://media.api-sports.io/football/teams/${id}.png`,
-      code: teamName.slice(0, 3).toUpperCase()
-    };
+  // Return cached result if already searched in this execution run
+  if (searchCache[cleanName]) {
+    return searchCache[cleanName];
   }
 
-  // Fallback to active query
   if (!baseUrl || !headers) return null;
   try {
-    const response = await fetch(`${baseUrl}/teams?name=${encodeURIComponent(teamName)}`, { headers });
+    const response = await fetch(`${baseUrl}/teams?search=${encodeURIComponent(cleanName)}`, { headers });
     const data = await response.json();
     if (data && data.response && data.response.length > 0) {
-      return {
-        id: data.response[0].team.id,
-        name: data.response[0].team.name,
-        logo: data.response[0].team.logo,
-        code: data.response[0].team.code || teamName.slice(0, 3).toUpperCase()
+      let teamObj = data.response[0];
+      
+      // Auto-filter for Turkish teams first if searching a local team
+      const isLocalSearch = teamName.toLowerCase().match(/(spor|fk|sk|bb|ankara|istanbul|izmir|adana|bursa|kocaeli|erzurum|samsun|rize|konya|antalya|sivas|gaziantep|kayseri|hatay|bodrum|goztepe|eyup|basaksehir|galatasaray|fenerbahce|besiktas|trabzonspor|corum|umranıye|bandırma|bolu|manisa|altay|giresun|sakarya|kocaeli|şanlıurfa|malatya)/);
+      if (isLocalSearch) {
+        const turkishTeam = data.response.find(r => r.team.country === 'Turkey');
+        if (turkishTeam) {
+          teamObj = turkishTeam;
+        }
+      }
+      
+      const result = {
+        id: teamObj.team.id,
+        name: teamObj.team.name,
+        logo: teamObj.team.logo,
+        code: teamObj.team.code || teamName.slice(0, 3).toUpperCase()
       };
+      
+      searchCache[cleanName] = result;
+      return result;
     }
   } catch (err) {
     console.error(`Error searching team ${teamName}:`, err);
@@ -227,11 +161,6 @@ function factorial(n) {
   let r = 1;
   for (let i = 2; i <= n; i++) r *= i;
   return r;
-}
-
-function poissonProbability(k, lambda) {
-  if (lambda <= 0) return k === 0 ? 1 : 0;
-  return (Math.exp(-lambda) * Math.pow(lambda, k)) / factorial(k);
 }
 
 // Dixon-Coles Adjusted Poisson Model
@@ -338,7 +267,6 @@ module.exports = async (req, res) => {
   let headers = null;
   if (apiKey) {
     headers = {};
-    // Auto-detect RapidAPI key format (usually 50 chars) or header setting
     if (apiKey.length === 50 || apiHeader === 'x-rapidapi-key') {
       headers['x-rapidapi-key'] = apiKey;
       headers['x-rapidapi-host'] = 'api-football-v1.p.rapidapi.com';
@@ -348,38 +276,6 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // ----------------------------------------------------
-    // DEBUG ROUTINE: Fetch all teams for league 203 & 204
-    // ----------------------------------------------------
-    let debugTeams = {};
-    if (headers && apiUrl) {
-      try {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth();
-        const currentYear = month >= 7 ? year : year - 1;
-
-        const res203 = await fetch(`${apiUrl}/teams?league=203&season=${currentYear}`, { headers });
-        const data203 = await res203.json();
-        if (data203 && data203.response) {
-          data203.response.forEach(r => {
-            debugTeams[r.team.name.toLowerCase().trim()] = r.team.id;
-          });
-        }
-        
-        const res204 = await fetch(`${apiUrl}/teams?league=204&season=${currentYear}`, { headers });
-        const data204 = await res204.json();
-        if (data204 && data204.response) {
-          data204.response.forEach(r => {
-            debugTeams[r.team.name.toLowerCase().trim()] = r.team.id;
-          });
-        }
-      } catch (e) {
-        console.error("Debug fetch teams failed:", e);
-      }
-    }
-    // ----------------------------------------------------
-
     const updatedMatches = [];
 
     for (let i = 0; i < matches.length; i++) {
@@ -560,7 +456,7 @@ module.exports = async (req, res) => {
       console.warn("Database connection unavailable. Synced bulletin generated locally but not saved to cloud.");
     }
 
-    res.status(200).json({ success: true, matches: updatedMatches, isDemo: !db, debugTeams });
+    res.status(200).json({ success: true, matches: updatedMatches, isDemo: !db });
   } catch (error) {
     console.error("Critical error in /api/sync:", error);
     res.status(500).json({ error: "Failed to compile and sync bulletin matches.", message: error.message });
