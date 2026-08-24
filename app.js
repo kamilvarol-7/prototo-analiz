@@ -505,19 +505,19 @@ function renderAdminPanel() {
         </select>
       </div>
       <div>
-        <input type="text" class="admin-home-name" list="teams-datalist" value="${match.homeTeam.name}">
+        <input type="text" class="admin-home-name" list="teams-datalist" placeholder="Ev Sahibi Takım" value="">
       </div>
       <div>
-        <input type="text" class="admin-away-name" list="teams-datalist" value="${match.awayTeam.name}">
+        <input type="text" class="admin-away-name" list="teams-datalist" placeholder="Deplasman Takımı" value="">
       </div>
       <div>
-        <input type="number" class="admin-pct-home" min="0" max="100" value="${match.playPercentages.home}">
+        <input type="number" class="admin-pct-home" min="0" max="100" placeholder="Ev %" value="">
       </div>
       <div>
-        <input type="number" class="admin-pct-draw" min="0" max="100" value="${match.playPercentages.draw}">
+        <input type="number" class="admin-pct-draw" min="0" max="100" placeholder="Ber %" value="">
       </div>
       <div>
-        <input type="number" class="admin-pct-away" min="0" max="100" value="${match.playPercentages.away}">
+        <input type="number" class="admin-pct-away" min="0" max="100" placeholder="Dep %" value="">
       </div>
     `;
     
