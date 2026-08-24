@@ -39,7 +39,7 @@ async function searchTeam(teamName, headers, baseUrl) {
   return null;
 }
 
-// --- Helper: Get Team Goals Stats from Football API ---
+// --- Helper: Get Team Goals Stats, Matches Played and Form from Football API ---
 async function getTeamStats(teamId, leagueId, headers, baseUrl) {
   if (!baseUrl || !headers) return null;
   try {
@@ -56,7 +56,10 @@ async function getTeamStats(teamId, leagueId, headers, baseUrl) {
         goalsForHome: stats.goals.for.average.home || "1.5",
         goalsForAway: stats.goals.for.average.away || "1.2",
         goalsAgainstHome: stats.goals.against.average.home || "1.1",
-        goalsAgainstAway: stats.goals.against.average.away || "1.3"
+        goalsAgainstAway: stats.goals.against.average.away || "1.3",
+        playedHome: (stats.fixtures && stats.fixtures.played && stats.fixtures.played.home) || 0,
+        playedAway: (stats.fixtures && stats.fixtures.played && stats.fixtures.played.away) || 0,
+        form: stats.form || ""
       };
     }
   } catch (err) {
@@ -84,6 +87,19 @@ async function getH2HMatches(homeId, awayId, headers, baseUrl) {
   return [];
 }
 
+// --- Helper: Form Multiplier Calculation ---
+function getFormMultiplier(formString) {
+  if (!formString) return 1.0;
+  const recentForm = formString.slice(-5).toUpperCase();
+  let adjustment = 0;
+  for (let i = 0; i < recentForm.length; i++) {
+    const char = recentForm[i];
+    if (char === 'W') adjustment += 0.04; 
+    else if (char === 'L') adjustment -= 0.04; 
+  }
+  return 1.0 + adjustment;
+}
+
 // --- Poisson Mathematics Engine ---
 function factorial(n) {
   if (n === 0 || n === 1) return 1;
@@ -92,13 +108,12 @@ function factorial(n) {
   return r;
 }
 
-// Poisson Probability density function
 function poissonProbability(k, lambda) {
   if (lambda <= 0) return k === 0 ? 1 : 0;
   return (Math.exp(-lambda) * Math.pow(lambda, k)) / factorial(k);
 }
 
-// Compute Win/Draw/Loss probabilities using Poisson distribution
+// Dixon-Coles Adjusted Poisson Model
 function calculateMatchPredictions(homeScoredAvg, homeConcededAvg, awayScoredAvg, awayConcededAvg) {
   const lambdaHome = (homeScoredAvg + awayConcededAvg) / 2;
   const lambdaAway = (awayScoredAvg + homeConcededAvg) / 2;
@@ -112,13 +127,7 @@ function calculateMatchPredictions(homeScoredAvg, homeConcededAvg, awayScoredAvg
     awayProbabilities[g] = poissonProbability(g, lambdaAway);
   }
 
-  const homeSum = homeProbabilities.reduce((a, b) => a + b, 0);
-  const awaySum = awayProbabilities.reduce((a, b) => a + b, 0);
-
-  for (let g = 0; g <= maxGoals; g++) {
-    homeProbabilities[g] /= homeSum;
-    awayProbabilities[g] /= awaySum;
-  }
+  const rho = -0.12;
 
   let homeWinProb = 0;
   let drawProb = 0;
@@ -127,8 +136,18 @@ function calculateMatchPredictions(homeScoredAvg, homeConcededAvg, awayScoredAvg
 
   for (let h = 0; h <= maxGoals; h++) {
     for (let a = 0; a <= maxGoals; a++) {
-      const prob = homeProbabilities[h] * awayProbabilities[a];
-      
+      let prob = homeProbabilities[h] * awayProbabilities[a];
+
+      if (h === 0 && a === 0) {
+        prob *= (1 - rho * lambdaHome * lambdaAway);
+      } else if (h === 1 && a === 0) {
+        prob *= (1 + rho * lambdaAway);
+      } else if (h === 0 && a === 1) {
+        prob *= (1 + rho * lambdaHome);
+      } else if (h === 1 && a === 1) {
+        prob *= (1 - rho);
+      }
+
       if (h > a) {
         homeWinProb += prob;
       } else if (h === a) {
@@ -139,11 +158,19 @@ function calculateMatchPredictions(homeScoredAvg, homeConcededAvg, awayScoredAvg
 
       scorelist.push({
         score: `${h} - ${a}`,
-        probability: Math.round(prob * 1000) / 10
+        probability: prob
       });
     }
   }
 
+  const totalSum = homeWinProb + drawProb + awayWinProb;
+  homeWinProb /= totalSum;
+  drawProb /= totalSum;
+  awayWinProb /= totalSum;
+
+  scorelist.forEach(s => {
+    s.probability = Math.round((s.probability / totalSum) * 1000) / 10;
+  });
   scorelist.sort((a, b) => b.probability - a.probability);
 
   return {
@@ -182,12 +209,22 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // Detect API configs from Environment Variables
+  // Detect API configs from Environment Variables with default URL fallback
   const apiKey = process.env.FOOTBALL_API_KEY;
-  const apiUrl = process.env.FOOTBALL_API_URL;
-  const apiHeader = process.env.FOOTBALL_API_HEADER || 'x-apisports-key';
+  const apiUrl = process.env.FOOTBALL_API_URL || 'https://v3.football.api-sports.io';
+  const apiHeader = process.env.FOOTBALL_API_HEADER;
 
-  const headers = apiKey ? { [apiHeader]: apiKey } : null;
+  let headers = null;
+  if (apiKey) {
+    headers = {};
+    // Auto-detect RapidAPI key format (usually 50 chars) or header setting
+    if (apiKey.length === 50 || apiHeader === 'x-rapidapi-key') {
+      headers['x-rapidapi-key'] = apiKey;
+      headers['x-rapidapi-host'] = 'api-football-v1.p.rapidapi.com';
+    } else {
+      headers[apiHeader || 'x-apisports-key'] = apiKey;
+    }
+  }
 
   try {
     const updatedMatches = [];
@@ -224,7 +261,7 @@ module.exports = async (req, res) => {
         code: awayTeamInfo ? awayTeamInfo.code : (match.awayTeam.code || match.awayTeam.name.slice(0, 3).toUpperCase())
       };
 
-      // 3. Fetch/Generate goals average stats
+      // 3. Fetch/Generate goals average stats with form scaling and Bayesian Smoothing
       let homeGoalsScored = 1.6;
       let homeGoalsConceded = 1.1;
       let awayGoalsScored = 1.3;
@@ -235,12 +272,35 @@ module.exports = async (req, res) => {
         const awayStats = await getTeamStats(awayTeamInfo.id, leagueId, headers, apiUrl);
 
         if (homeStats) {
-          homeGoalsScored = parseFloat(homeStats.goalsForHome) || 1.6;
-          homeGoalsConceded = parseFloat(homeStats.goalsAgainstHome) || 1.1;
+          const homePlayed = parseInt(homeStats.playedHome) || 0;
+          const homeMult = getFormMultiplier(homeStats.form);
+          let rawScored = parseFloat(homeStats.goalsForHome) || 1.6;
+          let rawConceded = parseFloat(homeStats.goalsAgainstHome) || 1.1;
+
+          // Bayesian Smoothing: If home matches played < 5, blend with league defaults
+          if (homePlayed < 5) {
+            rawScored = (rawScored * homePlayed + 1.5 * (5 - homePlayed)) / 5;
+            rawConceded = (rawConceded * homePlayed + 1.2 * (5 - homePlayed)) / 5;
+          }
+
+          homeGoalsScored = parseFloat((rawScored * homeMult).toFixed(2));
+          homeGoalsConceded = parseFloat((rawConceded / homeMult).toFixed(2));
         }
+        
         if (awayStats) {
-          awayGoalsScored = parseFloat(awayStats.goalsForAway) || 1.3;
-          awayGoalsConceded = parseFloat(awayStats.goalsAgainstAway) || 1.4;
+          const awayPlayed = parseInt(awayStats.playedAway) || 0;
+          const awayMult = getFormMultiplier(awayStats.form);
+          let rawScored = parseFloat(awayStats.goalsForAway) || 1.3;
+          let rawConceded = parseFloat(awayStats.goalsAgainstAway) || 1.4;
+
+          // Bayesian Smoothing: If away matches played < 5, blend with league defaults
+          if (awayPlayed < 5) {
+            rawScored = (rawScored * awayPlayed + 1.2 * (5 - awayPlayed)) / 5;
+            rawConceded = (rawConceded * awayPlayed + 1.5 * (5 - awayPlayed)) / 5;
+          }
+
+          awayGoalsScored = parseFloat((rawScored * awayMult).toFixed(2));
+          awayGoalsConceded = parseFloat((rawConceded / awayMult).toFixed(2));
         }
       } else {
         // Fallback: randomized realistic averages for testing
