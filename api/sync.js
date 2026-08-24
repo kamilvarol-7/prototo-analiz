@@ -1,5 +1,102 @@
 const { getFirestoreDb } = require('./firebase-admin-init');
 
+// --- Helper: Static Team name to API-Football ID mapping ---
+// Bypasses search queries, saves API quota, and resolves spelling/Turkish character mismatches
+const TEAM_IDS = {
+  "galatasaray": 611,
+  "fenerbahçe": 607,
+  "fenerbahce": 607,
+  "beşiktaş": 564,
+  "besiktas": 564,
+  "trabzonspor": 549,
+  "başakşehir": 996,
+  "basaksehir": 996,
+  "eyüpspor": 3577,
+  "eyupspor": 3577,
+  "çaykur rizespor": 603,
+  "rizespor": 603,
+  "samsunspor": 3584,
+  "antalyaspor": 558,
+  "konyaspor": 560,
+  "göztepe": 601,
+  "goztepe": 601,
+  "alanyaspor": 563,
+  "kasımpaşa": 1001,
+  "kasimpasa": 1001,
+  "bodrum fk": 14093,
+  "bodrumspor": 14093,
+  "gaziantep fk": 3575,
+  "sivasspor": 559,
+  "kayserispor": 561,
+  "hatayspor": 3578,
+  "adana demirspor": 3569,
+  "fatih karagümrük": 1002,
+  "karagümrük": 1002,
+  "pendikspor": 10167,
+  "istanbulspor": 1005,
+  "ankaragücü": 562,
+  "gençlerbirliği": 602,
+  "genclerbirligi": 602,
+  "erzurumspor": 3574,
+  "erzurum bb": 3574,
+  "kocaelispor": 3580,
+  "sakaryaspor": 3583,
+  "giresunspor": 3576,
+  "altay": 3570,
+  "manisa fk": 10165,
+  "boluspor": 3573,
+  "bandırmaspor": 3572,
+  "çorum fk": 12822,
+  "ümraniyespor": 3585,
+  "adanaspor": 3568,
+  "şanlıurfaspor": 3582,
+  "yeni malatyaspor": 3581,
+  
+  // Premier League
+  "arsenal": 42,
+  "manchester city": 50,
+  "chelsea": 49,
+  "aston villa": 66,
+  "liverpool": 40,
+  "manchester united": 33,
+  "tottenham": 47,
+  "newcastle": 34,
+  "west ham": 48,
+  "brighton": 51,
+  
+  // La Liga
+  "real madrid": 541,
+  "barcelona": 529,
+  "atletico madrid": 530,
+  "real sociedad": 548,
+  "sevilla": 536,
+  "villarreal": 533,
+  
+  // Serie A
+  "inter": 505,
+  "juventus": 496,
+  "milan": 489,
+  "napoli": 492,
+  "roma": 497,
+  
+  // Bundesliga
+  "bayern munich": 157,
+  "borussia dortmund": 165,
+  "bayer leverkusen": 168,
+  "rb leipzig": 173,
+  
+  // Others
+  "psg": 85,
+  "ajax": 194,
+  "psv": 197,
+  "feyenoord": 198,
+  "celtic": 65,
+  "rangers": 62,
+  "benfica": 211,
+  "porto": 212,
+  "sporting cp": 228
+};
+
 // --- Helper: League Name to API-Football League ID Mapping ---
 function getLeagueId(leagueName) {
   const name = leagueName.toLowerCase().trim();
@@ -21,6 +118,20 @@ function getLeagueId(leagueName) {
 
 // --- Helper: Search Team ID & Logo in Football API ---
 async function searchTeam(teamName, headers, baseUrl) {
+  const cleanName = teamName.toLowerCase().trim();
+  
+  // Try static resolution first (highly recommended for performance and accuracy)
+  if (TEAM_IDS[cleanName]) {
+    const id = TEAM_IDS[cleanName];
+    return {
+      id: id,
+      name: teamName,
+      logo: `https://media.api-sports.io/football/teams/${id}.png`,
+      code: teamName.slice(0, 3).toUpperCase()
+    };
+  }
+
+  // Fallback to active query
   if (!baseUrl || !headers) return null;
   try {
     const response = await fetch(`${baseUrl}/teams?name=${encodeURIComponent(teamName)}`, { headers });
@@ -262,70 +373,84 @@ module.exports = async (req, res) => {
       };
 
       // 3. Fetch/Generate goals average stats with form scaling and Bayesian Smoothing
-      let homeGoalsScored = 1.6;
-      let homeGoalsConceded = 1.1;
-      let awayGoalsScored = 1.3;
-      let awayGoalsConceded = 1.4;
+      let rawHomeScored = 1.6;
+      let rawHomeConceded = 1.1;
+      let rawAwayScored = 1.3;
+      let rawAwayConceded = 1.4;
+
+      let homePlayed = 0;
+      let awayPlayed = 0;
+      let homeMult = 1.0;
+      let awayMult = 1.0;
 
       if (homeTeamInfo && awayTeamInfo && headers && apiUrl) {
         const homeStats = await getTeamStats(homeTeamInfo.id, leagueId, headers, apiUrl);
         const awayStats = await getTeamStats(awayTeamInfo.id, leagueId, headers, apiUrl);
 
         if (homeStats) {
-          const homePlayed = parseInt(homeStats.playedHome) || 0;
-          const homeMult = getFormMultiplier(homeStats.form);
-          let rawScored = parseFloat(homeStats.goalsForHome) || 1.6;
-          let rawConceded = parseFloat(homeStats.goalsAgainstHome) || 1.1;
-
-          // Bayesian Smoothing: If home matches played < 5, blend with league defaults
-          if (homePlayed < 5) {
-            rawScored = (rawScored * homePlayed + 1.5 * (5 - homePlayed)) / 5;
-            rawConceded = (rawConceded * homePlayed + 1.2 * (5 - homePlayed)) / 5;
-          }
-
-          homeGoalsScored = parseFloat((rawScored * homeMult).toFixed(2));
-          homeGoalsConceded = parseFloat((rawConceded / homeMult).toFixed(2));
+          homePlayed = parseInt(homeStats.playedHome) || 0;
+          homeMult = getFormMultiplier(homeStats.form);
+          rawHomeScored = parseFloat(homeStats.goalsForHome) || 0.0;
+          rawHomeConceded = parseFloat(homeStats.goalsAgainstHome) || 0.0;
         }
         
         if (awayStats) {
-          const awayPlayed = parseInt(awayStats.playedAway) || 0;
-          const awayMult = getFormMultiplier(awayStats.form);
-          let rawScored = parseFloat(awayStats.goalsForAway) || 1.3;
-          let rawConceded = parseFloat(awayStats.goalsAgainstAway) || 1.4;
-
-          // Bayesian Smoothing: If away matches played < 5, blend with league defaults
-          if (awayPlayed < 5) {
-            rawScored = (rawScored * awayPlayed + 1.2 * (5 - awayPlayed)) / 5;
-            rawConceded = (rawConceded * awayPlayed + 1.5 * (5 - awayPlayed)) / 5;
-          }
-
-          awayGoalsScored = parseFloat((rawScored * awayMult).toFixed(2));
-          awayGoalsConceded = parseFloat((rawConceded / awayMult).toFixed(2));
+          awayPlayed = parseInt(awayStats.playedAway) || 0;
+          awayMult = getFormMultiplier(awayStats.form);
+          rawAwayScored = parseFloat(awayStats.goalsForAway) || 0.0;
+          rawAwayConceded = parseFloat(awayStats.goalsAgainstAway) || 0.0;
         }
-      } else {
-        // Fallback: randomized realistic averages for testing
-        homeGoalsScored = parseFloat((Math.random() * 1.5 + 1.1).toFixed(2));
-        homeGoalsConceded = parseFloat((Math.random() * 1.4 + 0.6).toFixed(2));
-        awayGoalsScored = parseFloat((Math.random() * 1.4 + 0.8).toFixed(2));
-        awayGoalsConceded = parseFloat((Math.random() * 1.5 + 0.7).toFixed(2));
       }
 
-      // 4. Calculate Poisson Win/Draw/Loss probabilities and score predictions
-      const predictions = calculateMatchPredictions(homeGoalsScored, homeGoalsConceded, awayGoalsScored, awayGoalsConceded);
+      // Smooth only for mathematical Poisson calculations
+      let smoothedHomeScored = rawHomeScored;
+      let smoothedHomeConceded = rawHomeConceded;
+      let smoothedAwayScored = rawAwayScored;
+      let smoothedAwayConceded = rawAwayConceded;
 
-      // 5. Construct stats object
+      if (headers && apiUrl) {
+        if (homePlayed < 5) {
+          smoothedHomeScored = (rawHomeScored * homePlayed + 1.5 * (5 - homePlayed)) / 5;
+          smoothedHomeConceded = (rawHomeConceded * homePlayed + 1.2 * (5 - homePlayed)) / 5;
+        }
+        if (awayPlayed < 5) {
+          smoothedAwayScored = (rawAwayScored * awayPlayed + 1.2 * (5 - awayPlayed)) / 5;
+          smoothedAwayConceded = (rawAwayConceded * awayPlayed + 1.5 * (5 - awayPlayed)) / 5;
+        }
+      } else {
+        // Fallback simulated values if no API connection
+        rawHomeScored = parseFloat((Math.random() * 1.5 + 1.1).toFixed(2));
+        rawHomeConceded = parseFloat((Math.random() * 1.4 + 0.6).toFixed(2));
+        rawAwayScored = parseFloat((Math.random() * 1.4 + 0.8).toFixed(2));
+        rawAwayConceded = parseFloat((Math.random() * 1.5 + 0.7).toFixed(2));
+        
+        smoothedHomeScored = rawHomeScored;
+        smoothedHomeConceded = rawHomeConceded;
+        smoothedAwayScored = rawAwayScored;
+        smoothedAwayConceded = rawAwayConceded;
+      }
+
+      // 4. Calculate predictions using smoothed values
+      const predictions = calculateMatchPredictions(
+        smoothedHomeScored * homeMult, 
+        smoothedHomeConceded / homeMult, 
+        smoothedAwayScored * awayMult, 
+        smoothedAwayConceded / awayMult
+      );
+
+      // 5. Construct stats object using raw values for UI display
       const statistics = {
-        goalsScoredAvg: [homeGoalsScored, awayGoalsScored],
-        goalsConcededAvg: [homeGoalsConceded, awayGoalsConceded],
-        shotsAvg: [parseFloat((homeGoalsScored * 7 + 3).toFixed(1)), parseFloat((awayGoalsScored * 6 + 4).toFixed(1))],
-        shotsConcededAvg: [parseFloat((homeGoalsConceded * 8 + 2).toFixed(1)), parseFloat((awayGoalsConceded * 7 + 3).toFixed(1))],
-        firstGoalPct: [Math.round(homeGoalsScored * 30 + 20), Math.round(awayGoalsScored * 25 + 25)],
-        bothTeamsToScorePct: Math.round((1 - (homeGoalsConceded < 0.2 ? 0.2 : homeGoalsConceded) * 0.1) * 60)
+        goalsScoredAvg: [parseFloat(rawHomeScored.toFixed(2)), parseFloat(rawAwayScored.toFixed(2))],
+        goalsConcededAvg: [parseFloat(rawHomeConceded.toFixed(2)), parseFloat(rawAwayConceded.toFixed(2))],
+        shotsAvg: [parseFloat((rawHomeScored * 7 + 3).toFixed(1)), parseFloat((rawAwayScored * 6 + 4).toFixed(1))],
+        shotsConcededAvg: [parseFloat((rawHomeConceded * 8 + 2).toFixed(1)), parseFloat((rawAwayConceded * 7 + 3).toFixed(1))],
+        firstGoalPct: [Math.round(rawHomeScored * 30 + 20), Math.round(rawAwayScored * 25 + 25)],
+        bothTeamsToScorePct: Math.round((1 - (rawHomeConceded < 0.2 ? 0.2 : rawHomeConceded) * 0.1) * 60)
       };
 
       // xG approximations
-      statistics.xgScored = [parseFloat((homeGoalsScored * 0.9 + 0.2).toFixed(2)), parseFloat((awayGoalsScored * 0.85 + 0.25).toFixed(2))];
-      statistics.xgConceded = [parseFloat((homeGoalsConceded * 0.85 + 0.2).toFixed(2)), parseFloat((awayGoalsConceded * 0.9 + 0.15).toFixed(2))];
+      statistics.xgScored = [parseFloat((rawHomeScored * 0.9 + 0.2).toFixed(2)), parseFloat((rawAwayScored * 0.85 + 0.25).toFixed(2))];
+      statistics.xgConceded = [parseFloat((rawHomeConceded * 0.85 + 0.2).toFixed(2)), parseFloat((rawAwayConceded * 0.9 + 0.15).toFixed(2))];
 
       // 6. Build final match object
       const fullMatch = {
