@@ -1,7 +1,8 @@
 // --- STATE MANAGEMENT ---
 let appState = {
   matches: [],
-  selectedMatchId: "1"
+  selectedMatchId: "1",
+  isDemo: true
 };
 
 // Cache DOM elements
@@ -65,7 +66,15 @@ async function init() {
   try {
     const response = await fetch('/api/matches');
     const data = await response.json();
-    appState.matches = data;
+    
+    // Parse matches array and check if running in demo mode
+    if (data && data.matches) {
+      appState.matches = data.matches;
+      appState.isDemo = data.isDemo;
+    } else {
+      appState.matches = data || [];
+      appState.isDemo = true;
+    }
     
     // Default select first match in array
     if (appState.matches.length > 0) {
@@ -73,6 +82,7 @@ async function init() {
     }
   } catch (error) {
     console.error("Error loading matches bulletin from backend:", error);
+    appState.isDemo = true;
   }
 
   renderMatchList();
@@ -141,9 +151,21 @@ function renderMatchDetails() {
     else awayWins++;
   });
 
+  // Construct Demo mode warning banner if enabled
+  const demoBannerHTML = appState.isDemo ? `
+    <div style="background: rgba(255, 208, 20, 0.08); border: 1px solid rgba(255, 208, 20, 0.2); color: var(--secondary); padding: 14px 20px; border-radius: 12px; margin: 24px 40px 0 40px; font-size: 0.85rem; display: flex; align-items: center; gap: 12px; line-height: 1.4; backdrop-filter: blur(10px);">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" style="flex-shrink:0;">
+        <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm-1.02 5.09v3.085h2.084V7.105H6.918zm0-2.059v1.399h2.084V5.046H6.918z"/>
+      </svg>
+      <span><strong>Demo Modu:</strong> Şu anda canlı veritabanı (Firebase) bağlantısı kurulmadığı için <strong>örnek analiz bülteni</strong> gösterilmektedir. Gerçek verileri çekmek için Vercel panelinden veritabanı ve API anahtarlarınızı tanımlayın.</span>
+    </div>
+  ` : '';
+
   const mainHTML = `
+    ${demoBannerHTML}
+    
     <!-- Header Block -->
-    <section class="detail-header">
+    <section class="detail-header" style="${appState.isDemo ? 'padding-top: 16px;' : ''}">
       <div class="header-top">
         <span class="match-index-badge">HAFTA: 34 | MAÇ: ${String(match.matchId).padStart(2, '0')}</span>
         <span>${match.league} Analiz Raporu</span>
@@ -446,6 +468,7 @@ async function saveAdminData() {
     const syncData = await syncResponse.json();
     if (syncData.success && syncData.matches) {
       appState.matches = syncData.matches;
+      appState.isDemo = syncData.isDemo;
       renderMatchList();
       renderMatchDetails();
       showToast();

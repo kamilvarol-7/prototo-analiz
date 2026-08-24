@@ -280,7 +280,7 @@ module.exports = async (req, res) => {
       console.warn("Database connection unavailable. Synced bulletin generated locally but not saved to cloud.");
     }
 
-    res.status(200).json({ success: true, matches: updatedMatches });
+    res.status(200).json({ success: true, matches: updatedMatches, isDemo: !db });
   } catch (error) {
     console.error("Critical error in /api/sync:", error);
     res.status(500).json({ error: "Failed to compile and sync bulletin matches.", message: error.message });

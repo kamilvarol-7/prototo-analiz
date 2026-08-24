@@ -342,7 +342,6 @@ const INITIAL_MATCHES = [
 ];
 
 module.exports = async (req, res) => {
-  // CORS configurations for API calls
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
@@ -364,16 +363,17 @@ module.exports = async (req, res) => {
       if (doc.exists) {
         const data = doc.data();
         if (data && data.matches) {
-          res.status(200).json(data.matches);
+          // Firebase connected and data found
+          res.status(200).json({ matches: data.matches, isDemo: false });
           return;
         }
       }
     }
     
-    // Server-side fallback if Firebase is not linked
-    res.status(200).json(INITIAL_MATCHES);
+    // Firebase is not connected or empty, send fallback mock list as demo
+    res.status(200).json({ matches: INITIAL_MATCHES, isDemo: true });
   } catch (error) {
-    console.error("Error fetching bulletin from Firestore:", error);
-    res.status(200).json(INITIAL_MATCHES);
+    console.error("Error in /api/matches:", error);
+    res.status(200).json({ matches: INITIAL_MATCHES, isDemo: true });
   }
 };
