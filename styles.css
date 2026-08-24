@@ -866,3 +866,50 @@ body {
     gap: 16px;
   }
 }
+
+/* --- VALUE CARD FOR SPOR TOTO ANALYSIS --- */
+.value-card {
+  background: linear-gradient(135deg, rgba(0, 176, 116, 0.1) 0%, rgba(0, 176, 116, 0.02) 100%);
+  border: 1px solid rgba(0, 176, 116, 0.25);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 24px 40px 0 40px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 20px rgba(0, 176, 116, 0.05);
+  backdrop-filter: var(--blur-amount);
+}
+
+.value-card-icon {
+  background-color: var(--primary);
+  color: #0c0d0f;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  box-shadow: 0 0 12px var(--primary-glow);
+}
+
+.value-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.value-card-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--primary);
+}
+
+.value-card-text {
+  font-size: 0.85rem;
+  color: var(--text-main);
+  line-height: 1.4;
+}

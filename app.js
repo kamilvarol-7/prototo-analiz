@@ -233,8 +233,44 @@ function renderMatchDetails() {
     </div>
   ` : '';
 
+  // Calculate Value Bet / Fırsat katsayısı
+  let valueCardHTML = '';
+  const homeVal = probabilities.homeWin - match.playPercentages.home;
+  const drawVal = probabilities.draw - match.playPercentages.draw;
+  const awayVal = probabilities.awayWin - match.playPercentages.away;
+
+  const valueOptions = [
+    { type: 'home', diff: homeVal, label: 'Ev Sahibi (1)', rate: probabilities.homeWin, played: match.playPercentages.home },
+    { type: 'draw', diff: drawVal, label: 'Beraberlik (X)', rate: probabilities.draw, played: match.playPercentages.draw },
+    { type: 'away', diff: awayVal, label: 'Deplasman (2)', rate: probabilities.awayWin, played: match.playPercentages.away }
+  ];
+
+  valueOptions.sort((a, b) => b.diff - a.diff);
+  const bestValue = valueOptions[0];
+
+  if (bestValue.diff >= 10) {
+    let outcomeIcon = '1';
+    if (bestValue.type === 'draw') outcomeIcon = 'X';
+    if (bestValue.type === 'away') outcomeIcon = '2';
+
+    valueCardHTML = `
+      <div class="value-card">
+        <div class="value-card-icon">${outcomeIcon}</div>
+        <div class="value-card-content">
+          <div class="value-card-title">🔥 Değerli Tercih: ${bestValue.label} (Fark: +%${Math.round(bestValue.diff)})</div>
+          <div class="value-card-text">
+            Sistem analizine göre bu maçta <strong>${bestValue.label}</strong> olasılığı <strong>%${bestValue.rate}</strong> iken, 
+            resmi Spor Toto kuponlarında bu tercih sadece <strong>%${bestValue.played}</strong> oranında oynanmış. 
+            Bu tercihi kuponunuza eklemek uzun vadede çok yüksek kazanç değeri (Value) sağlar!
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   const mainHTML = `
     ${demoBannerHTML}
+    ${valueCardHTML}
     
     <!-- Header Block -->
     <section class="detail-header" style="${appState.isDemo ? 'padding-top: 16px;' : ''}">
