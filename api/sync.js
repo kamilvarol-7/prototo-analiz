@@ -210,6 +210,11 @@ function factorial(n) {
   return r;
 }
 
+function poissonProbability(k, lambda) {
+  if (isNaN(lambda) || lambda <= 0) return k === 0 ? 1 : 0;
+  return (Math.exp(-lambda) * Math.pow(lambda, k)) / factorial(k);
+}
+
 // Dixon-Coles Adjusted Poisson Model
 function calculateMatchPredictions(homeScoredAvg, homeConcededAvg, awayScoredAvg, awayConcededAvg) {
   const hScored = isNaN(homeScoredAvg) ? 1.6 : homeScoredAvg;
@@ -330,6 +335,8 @@ module.exports = async (req, res) => {
     } else {
       headers[apiHeader || 'x-apisports-key'] = apiKey;
     }
+  } else {
+    apiError = "FOOTBALL_API_KEY ortam değişkeni Vercel üzerinde tanımlı değil. Canlı istatistik ve logoların yüklenebilmesi için Vercel projenizde bu değişkeni tanımlamanız gerekmektedir.";
   }
 
   try {
