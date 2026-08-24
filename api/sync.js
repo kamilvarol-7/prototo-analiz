@@ -43,7 +43,11 @@ async function searchTeam(teamName, headers, baseUrl) {
 async function getTeamStats(teamId, leagueId, headers, baseUrl) {
   if (!baseUrl || !headers) return null;
   try {
-    const currentYear = new Date().getFullYear() - 1; // API statistics usually fully populated for previous or current season
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth(); // 0 = Jan, 7 = Aug
+    const currentYear = month >= 7 ? year : year - 1;
+    
     const response = await fetch(`${baseUrl}/teams/statistics?league=${leagueId}&season=${currentYear}&team=${teamId}`, { headers });
     const data = await response.json();
     if (data && data.response) {
@@ -88,11 +92,13 @@ function factorial(n) {
   return r;
 }
 
+// Poisson Probability density function
 function poissonProbability(k, lambda) {
   if (lambda <= 0) return k === 0 ? 1 : 0;
   return (Math.exp(-lambda) * Math.pow(lambda, k)) / factorial(k);
 }
 
+// Compute Win/Draw/Loss probabilities using Poisson distribution
 function calculateMatchPredictions(homeScoredAvg, homeConcededAvg, awayScoredAvg, awayConcededAvg) {
   const lambdaHome = (homeScoredAvg + awayConcededAvg) / 2;
   const lambdaAway = (awayScoredAvg + homeConcededAvg) / 2;
