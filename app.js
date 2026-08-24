@@ -355,41 +355,35 @@ function renderMatchDetails() {
             <span class="stat-name">Yenilen Gol (Ort)</span>
             <span class="stat-val away">${match.statistics.goalsConcededAvg[1].toFixed(2)}</span>
           </div>
-          <!-- Şut Ortalaması -->
+          <!-- Kalesini Gole Kapatma % -->
           <div class="stat-row-item">
-            <span class="stat-val home">${match.statistics.shotsAvg[0].toFixed(1)}</span>
-            <span class="stat-name">Atılan Şut Ort.</span>
-            <span class="stat-val away">${match.statistics.shotsAvg[1].toFixed(1)}</span>
+            <span class="stat-val home">%${match.statistics.cleanSheetPct[0]}</span>
+            <span class="stat-name">Gole Kapatma (Clean Sheet) %</span>
+            <span class="stat-val away">%${match.statistics.cleanSheetPct[1]}</span>
           </div>
-          <!-- Yenilen Şut Ortalaması -->
+          <!-- Gol Atamadığı Maç % -->
           <div class="stat-row-item">
-            <span class="stat-val home">${match.statistics.shotsConcededAvg[0].toFixed(1)}</span>
-            <span class="stat-name">Yenilen Şut Ort.</span>
-            <span class="stat-val away">${match.statistics.shotsConcededAvg[1].toFixed(1)}</span>
+            <span class="stat-val home">%${match.statistics.failedToScorePct[0]}</span>
+            <span class="stat-name">Gol Atamadığı Maç %</span>
+            <span class="stat-val away">%${match.statistics.failedToScorePct[1]}</span>
           </div>
-          <!-- İlk Gol Atma Yüzdesi -->
+          <!-- Galibiyet % -->
           <div class="stat-row-item">
-            <span class="stat-val home">%${match.statistics.firstGoalPct[0]}</span>
-            <span class="stat-name">İlk Golü Atma %</span>
-            <span class="stat-val away">%${match.statistics.firstGoalPct[1]}</span>
+            <span class="stat-val home">%${match.statistics.winPct[0]}</span>
+            <span class="stat-name">Galibiyet (Ev/Dep) %</span>
+            <span class="stat-val away">%${match.statistics.winPct[1]}</span>
           </div>
-          <!-- Karşılıklı Gol Yüzdesi -->
+          <!-- Beraberlik % -->
           <div class="stat-row-item">
-            <span class="stat-val home">%${match.statistics.bothTeamsToScorePct}</span>
-            <span class="stat-name">Karşılıklı Gol %</span>
-            <span class="stat-val away">%${match.statistics.bothTeamsToScorePct}</span>
+            <span class="stat-val home">%${match.statistics.drawPct[0]}</span>
+            <span class="stat-name">Beraberlik (Ev/Dep) %</span>
+            <span class="stat-val away">%${match.statistics.drawPct[1]}</span>
           </div>
-          <!-- Kazanılan xG -->
+          <!-- Mağlubiyet % -->
           <div class="stat-row-item">
-            <span class="stat-val home">${match.statistics.xgScored[0].toFixed(2)}</span>
-            <span class="stat-name">Kazanılan xG</span>
-            <span class="stat-val away">${match.statistics.xgScored[1].toFixed(2)}</span>
-          </div>
-          <!-- Yenilen xG -->
-          <div class="stat-row-item">
-            <span class="stat-val home">${match.statistics.xgConceded[0].toFixed(2)}</span>
-            <span class="stat-name">Yenilen xG</span>
-            <span class="stat-val away">${match.statistics.xgConceded[1].toFixed(2)}</span>
+            <span class="stat-val home">%${match.statistics.lossPct[0]}</span>
+            <span class="stat-name">Mağlubiyet (Ev/Dep) %</span>
+            <span class="stat-val away">%${match.statistics.lossPct[1]}</span>
           </div>
         </div>
 
@@ -614,41 +608,6 @@ function showToast() {
 function openAdminModal() {
   renderAdminPanel();
   adminModalEl.classList.add('active');
-}
-
-function closeAdminModal() {
-  adminModalEl.classList.remove('active');
-}
-
-// --- HIDDEN ADMIN CHECK ROUTINE ---
-function checkAdminAccess() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const isAdmin = urlParams.get('admin') === 'true';
-  const adminBtn = document.getElementById('open-admin-btn');
-  
-  if (adminBtn) {
-    if (isAdmin) {
-      adminBtn.style.display = 'flex';
-    } else {
-      adminBtn.style.display = 'none';
-    }
-  }
-}
-
-// --- EVENT LISTENERS ---
-function setupEventListeners() {
-  closeAdminBtn.addEventListener('click', closeAdminModal);
-  cancelAdminBtn.addEventListener('click', closeAdminModal);
-  saveAdminBtn.addEventListener('click', saveAdminData);
-  
-  const adminBtn = document.getElementById('open-admin-btn');
-  if (adminBtn) {
-    adminBtn.addEventListener('click', openAdminModal);
-  }
-  
-  adminModalEl.addEventListener('click', (e) => {
-    if (e.target === adminModalEl) closeAdminModal();
-  });
 }
 
 // Start application

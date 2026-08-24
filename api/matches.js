@@ -1,6 +1,6 @@
 const { getFirestoreDb } = require('./firebase-admin-init');
 
-// Self-contained server-side fallback matches with correct FotMob team logo URLs and full prediction models
+// Self-contained server-side fallback matches with correct team logo URLs and full prediction models
 const INITIAL_MATCHES = [
   {
     matchId: "1",
@@ -10,12 +10,11 @@ const INITIAL_MATCHES = [
     statistics: {
       goalsScoredAvg: [2.4, 2.1],
       goalsConcededAvg: [0.9, 0.8],
-      shotsAvg: [16.4, 15.2],
-      shotsConcededAvg: [8.6, 9.1],
-      firstGoalPct: [78, 72],
-      bothTeamsToScorePct: 56,
-      xgScored: [2.15, 1.95],
-      xgConceded: [0.92, 0.88]
+      cleanSheetPct: [52, 48],
+      failedToScorePct: [10, 12],
+      winPct: [74, 68],
+      drawPct: [16, 18],
+      lossPct: [10, 14]
     },
     h2hMatches: [
       { homeScore: 2, awayScore: 1, date: "19.05.2024" },
@@ -39,12 +38,11 @@ const INITIAL_MATCHES = [
     statistics: {
       goalsScoredAvg: [1.2, 1.4],
       goalsConcededAvg: [1.5, 1.1],
-      shotsAvg: [11.2, 12.4],
-      shotsConcededAvg: [13.1, 10.8],
-      firstGoalPct: [45, 60],
-      bothTeamsToScorePct: 48,
-      xgScored: [1.15, 1.38],
-      xgConceded: [1.42, 1.05]
+      cleanSheetPct: [24, 35],
+      failedToScorePct: [32, 20],
+      winPct: [34, 42],
+      drawPct: [26, 28],
+      lossPct: [40, 30]
     },
     h2hMatches: [
       { homeScore: 1, awayScore: 1, date: "23.02.2024" },
@@ -68,12 +66,11 @@ const INITIAL_MATCHES = [
     statistics: {
       goalsScoredAvg: [1.8, 1.6],
       goalsConcededAvg: [1.2, 1.3],
-      shotsAvg: [14.1, 13.5],
-      shotsConcededAvg: [11.2, 11.9],
-      firstGoalPct: [65, 58],
-      bothTeamsToScorePct: 52,
-      xgScored: [1.72, 1.55],
-      xgConceded: [1.18, 1.25]
+      cleanSheetPct: [40, 32],
+      failedToScorePct: [18, 22],
+      winPct: [54, 46],
+      drawPct: [24, 26],
+      lossPct: [22, 28]
     },
     h2hMatches: [
       { homeScore: 2, awayScore: 0, date: "04.02.2024" },
@@ -97,12 +94,11 @@ const INITIAL_MATCHES = [
     statistics: {
       goalsScoredAvg: [1.4, 1.3],
       goalsConcededAvg: [1.2, 1.4],
-      shotsAvg: [11.8, 11.5],
-      shotsConcededAvg: [12.0, 12.6],
-      firstGoalPct: [52, 48],
-      bothTeamsToScorePct: 50,
-      xgScored: [1.35, 1.28],
-      xgConceded: [1.18, 1.32]
+      cleanSheetPct: [36, 28],
+      failedToScorePct: [22, 30],
+      winPct: [45, 38],
+      drawPct: [28, 26],
+      lossPct: [27, 36]
     },
     h2hMatches: [
       { homeScore: 3, awayScore: 1, date: "15.01.2024" }
@@ -124,12 +120,11 @@ const INITIAL_MATCHES = [
     statistics: {
       goalsScoredAvg: [1.1, 0.9],
       goalsConcededAvg: [1.3, 1.2],
-      shotsAvg: [10.5, 9.8],
-      shotsConcededAvg: [12.2, 11.5],
-      firstGoalPct: [40, 38],
-      bothTeamsToScorePct: 44,
-      xgScored: [1.08, 0.94],
-      xgConceded: [1.24, 1.15]
+      cleanSheetPct: [30, 26],
+      failedToScorePct: [34, 38],
+      winPct: [38, 32],
+      drawPct: [30, 32],
+      lossPct: [32, 36]
     },
     h2hMatches: [
       { homeScore: 1, awayScore: 1, date: "09.03.2024" },
@@ -153,12 +148,11 @@ const INITIAL_MATCHES = [
     statistics: {
       goalsScoredAvg: [1.5, 1.2],
       goalsConcededAvg: [1.1, 1.4],
-      shotsAvg: [12.8, 11.1],
-      shotsConcededAvg: [10.5, 13.0],
-      firstGoalPct: [62, 45],
-      bothTeamsToScorePct: 52,
-      xgScored: [1.46, 1.18],
-      xgConceded: [1.08, 1.35]
+      cleanSheetPct: [38, 22],
+      failedToScorePct: [24, 34],
+      winPct: [48, 36],
+      drawPct: [26, 28],
+      lossPct: [26, 36]
     },
     h2hMatches: [
       { homeScore: 2, awayScore: 2, date: "16.04.2022" },
@@ -181,12 +175,11 @@ const INITIAL_MATCHES = [
     statistics: {
       goalsScoredAvg: [1.6, 1.1],
       goalsConcededAvg: [1.7, 1.3],
-      shotsAvg: [13.2, 10.2],
-      shotsConcededAvg: [14.1, 11.5],
-      firstGoalPct: [50, 42],
-      bothTeamsToScorePct: 60,
-      xgScored: [1.52, 1.08],
-      xgConceded: [1.65, 1.28]
+      cleanSheetPct: [20, 28],
+      failedToScorePct: [22, 36],
+      winPct: [42, 32],
+      drawPct: [24, 28],
+      lossPct: [34, 40]
     },
     h2hMatches: [],
     playPercentages: { home: 55, draw: 25, away: 20 },
@@ -206,12 +199,11 @@ const INITIAL_MATCHES = [
     statistics: {
       goalsScoredAvg: [1.2, 1.3],
       goalsConcededAvg: [1.5, 1.4],
-      shotsAvg: [11.0, 11.2],
-      shotsConcededAvg: [13.4, 12.8],
-      firstGoalPct: [44, 46],
-      bothTeamsToScorePct: 54,
-      xgScored: [1.18, 1.24],
-      xgConceded: [1.44, 1.38]
+      cleanSheetPct: [22, 26],
+      failedToScorePct: [32, 28],
+      winPct: [32, 38],
+      drawPct: [28, 26],
+      lossPct: [40, 36]
     },
     h2hMatches: [
       { homeScore: 2, awayScore: 2, date: "21.01.2024" },
@@ -235,12 +227,11 @@ const INITIAL_MATCHES = [
     statistics: {
       goalsScoredAvg: [2.3, 2.6],
       goalsConcededAvg: [0.7, 0.9],
-      shotsAvg: [17.1, 18.5],
-      shotsConcededAvg: [7.8, 8.2],
-      firstGoalPct: [82, 80],
-      bothTeamsToScorePct: 48,
-      xgScored: [2.24, 2.48],
-      xgConceded: [0.78, 0.85]
+      cleanSheetPct: [56, 44],
+      failedToScorePct: [8, 6],
+      winPct: [76, 72],
+      drawPct: [14, 16],
+      lossPct: [10, 12]
     },
     h2hMatches: [
       { homeScore: 0, awayScore: 0, date: "31.03.2024" },
@@ -264,12 +255,11 @@ const INITIAL_MATCHES = [
     statistics: {
       goalsScoredAvg: [2.0, 1.9],
       goalsConcededAvg: [1.6, 1.5],
-      shotsAvg: [14.8, 13.9],
-      shotsConcededAvg: [12.5, 11.8],
-      firstGoalPct: [60, 58],
-      bothTeamsToScorePct: 62,
-      xgScored: [1.92, 1.84],
-      xgConceded: [1.54, 1.48]
+      cleanSheetPct: [32, 28],
+      failedToScorePct: [18, 22],
+      winPct: [54, 48],
+      drawPct: [22, 24],
+      lossPct: [24, 28]
     },
     h2hMatches: [
       { homeScore: 2, awayScore: 2, date: "27.04.2024" },
@@ -293,12 +283,11 @@ const INITIAL_MATCHES = [
     statistics: {
       goalsScoredAvg: [2.4, 1.8],
       goalsConcededAvg: [0.7, 1.1],
-      shotsAvg: [16.2, 12.8],
-      shotsConcededAvg: [9.5, 11.2],
-      firstGoalPct: [80, 68],
-      bothTeamsToScorePct: 50,
-      xgScored: [2.25, 1.76],
-      xgConceded: [0.82, 1.10]
+      cleanSheetPct: [62, 40],
+      failedToScorePct: [6, 14],
+      winPct: [78, 54],
+      drawPct: [16, 26],
+      lossPct: [6, 20]
     },
     h2hMatches: [
       { homeScore: 1, awayScore: 1, date: "04.02.2024" },
@@ -322,12 +311,11 @@ const INITIAL_MATCHES = [
     statistics: {
       goalsScoredAvg: [2.1, 1.3],
       goalsConcededAvg: [1.1, 1.0],
-      shotsAvg: [15.6, 12.1],
-      shotsConcededAvg: [10.2, 10.5],
-      firstGoalPct: [70, 52],
-      bothTeamsToScorePct: 54,
-      xgScored: [2.05, 1.28],
-      xgConceded: [1.02, 1.08]
+      cleanSheetPct: [48, 38],
+      failedToScorePct: [12, 24],
+      winPct: [68, 42],
+      drawPct: [18, 28],
+      lossPct: [14, 30]
     },
     h2hMatches: [
       { homeScore: 2, awayScore: 0, date: "13.05.2024" },
@@ -351,12 +339,11 @@ const INITIAL_MATCHES = [
     statistics: {
       goalsScoredAvg: [2.3, 1.4],
       goalsConcededAvg: [0.6, 0.8],
-      shotsAvg: [15.8, 13.5],
-      shotsConcededAvg: [9.2, 9.6],
-      firstGoalPct: [84, 70],
-      bothTeamsToScorePct: 40,
-      xgScored: [2.18, 1.38],
-      xgConceded: [0.72, 0.85]
+      cleanSheetPct: [64, 48],
+      failedToScorePct: [4, 18],
+      winPct: [74, 52],
+      drawPct: [18, 30],
+      lossPct: [8, 18]
     },
     h2hMatches: [
       { homeScore: 1, awayScore: 0, date: "04.02.2024" },
@@ -380,12 +367,11 @@ const INITIAL_MATCHES = [
     statistics: {
       goalsScoredAvg: [1.9, 1.4],
       goalsConcededAvg: [1.3, 1.3],
-      shotsAvg: [14.2, 13.8],
-      shotsConcededAvg: [11.5, 11.2],
-      firstGoalPct: [68, 55],
-      bothTeamsToScorePct: 56,
-      xgScored: [1.82, 1.42],
-      xgConceded: [1.22, 1.25]
+      cleanSheetPct: [38, 36],
+      failedToScorePct: [16, 24],
+      winPct: [56, 48],
+      drawPct: [24, 26],
+      lossPct: [20, 26]
     },
     h2hMatches: [
       { homeScore: 1, awayScore: 0, date: "11.02.2024" },
@@ -409,12 +395,11 @@ const INITIAL_MATCHES = [
     statistics: {
       goalsScoredAvg: [1.2, 1.1],
       goalsConcededAvg: [1.4, 1.8],
-      shotsAvg: [11.5, 10.8],
-      shotsConcededAvg: [13.2, 14.6],
-      firstGoalPct: [48, 40],
-      bothTeamsToScorePct: 58,
-      xgScored: [1.22, 1.05],
-      xgConceded: [1.35, 1.72]
+      cleanSheetPct: [28, 18],
+      failedToScorePct: [30, 36],
+      winPct: [32, 28],
+      drawPct: [28, 24],
+      lossPct: [40, 48]
     },
     h2hMatches: [
       { homeScore: 2, awayScore: 0, date: "10.02.2024" },
@@ -453,14 +438,12 @@ module.exports = async (req, res) => {
       if (doc.exists) {
         const data = doc.data();
         if (data && data.matches) {
-          // Firebase connected and data found
           res.status(200).json({ matches: data.matches, isDemo: false });
           return;
         }
       }
     }
     
-    // Firebase is not connected or empty, send fallback mock list as demo
     res.status(200).json({ matches: INITIAL_MATCHES, isDemo: true });
   } catch (error) {
     console.error("Error in /api/matches:", error);
